@@ -1,0 +1,31 @@
+.parent {
+  display: grid;
+  grid-template-columns: 1fr 5fr 1fr 3fr 1fr;
+  grid-template-rows: 1fr 0.5fr 1fr 5fr;
+  grid-column-gap: 0px;
+  grid-row-gap: 0px;
+  height: 100vh;
+  grid-template-areas:
+    ". header header header ."
+    ". inputs inputs inputs ."
+    ". task . submit .";
+}
+
+#header {
+  grid-area: 1 / 2 / 2 / 5;
+  /* text-align: center; */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-family: "Quicksand", sans-serif;
+  /* font-family: 'Open Sans', sans-serif; */
+}
+#inputs {
+  grid-area: 2 / 2 / 3 / 5;
+}
+#task {
+  grid-area: 3 / 2 / 4 / 3;
+}
+#submit {
+  grid-area: 3 / 4 / 4 / 5;
+}
