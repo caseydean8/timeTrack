@@ -191,7 +191,7 @@ label > .label-body {
   grid-template-areas:
     ". header header header ."
     ". inputs inputs inputs ."
-    ". task . submit .";
+    ". task task task .";
 }
 
 #header {
@@ -209,16 +209,19 @@ h3 {
   margin-bottom: 0;
 }
 #task {
-  grid-area: 3 / 2 / 4 / 3;
+  grid-area: 3 / 2 / 4 / 5;
   position: relative;
 }
 
 input {
-  width: 100%;
+  /* width: 100%; */
+  grid-area: 3 / 2 / 4 / 3;
 }
 
 #submit {
   grid-area: 3 / 4 / 4 / 5;
 }
 
-#task-list { grid-area: 4 / 2 / 5 / 5; } 
+#task-list {
+  grid-area: 4 / 2 / 5 / 5;
+}
