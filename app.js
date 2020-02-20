@@ -8,6 +8,7 @@ var firebaseConfig = {
   appId: "1:1048812785668:web:cfe809c025700bd996a551",
   measurementId: "G-M2K5902JEQ"
 };
+
 // Initialize Firebase
 firebase.initializeApp(firebaseConfig);
 firebase.analytics();
@@ -32,3 +33,9 @@ const taskButtons = (task) => {
   $(taskBtn).text(task);
   $("#task-list").append(taskLabel, taskBtn);
 }
+
+db.ref().on("child_added", function(snapshot) {
+  const databaseTask = snapshot.val();
+  console.log(databaseTask);
+  taskButtons(databaseTask);
+})
