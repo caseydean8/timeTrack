@@ -43,7 +43,7 @@ const taskButtons = (task, key, dbDuration) => {
     class: "task-button",
     id: key,
     "data-start": false,
-    "data-time": dbDuration
+    // "data-time": dbDuration
   });
   $(taskBtn).text(task);
   $(taskForm).append(taskLabel, taskBtn);
@@ -65,29 +65,31 @@ let duration;
 $(document).on("click", ".task-button", function(event) {
   event.preventDefault();
   let timeStart = $(this).data("start");
-  let totalDuration = $(this).data("time");
-  console.log(totalDuration);
   const name = $(this).attr("id");
-  // let totalDuration = db.ref(name).on(duration);
+  let totalDuration;
+  db.ref(name).on("value", function(snapshot) {
+    totalDuration = snapshot.val().duration;
+  });
+  console.log(totalDuration);
   // console.log(typeof(name))
   const labelChange = $(`label[name="${name}"]`);
   if (!timeStart) {
     $(this).data("start", true);
     $(labelChange).text("press to stop");
-    console.log("timeStart is false");
     startTime = moment.utc();
     console.log(`start time is ${startTime}`);
     // startTaskTimer(startTime);
-  } else if (timeStart) {
+  } else {
     $(this).data("start", false);
-    $(labelChange).text("press to start");
-    console.log("timeStart is true");
     let endTime = moment.utc();
-
+    
     duration = moment.duration(endTime.diff(startTime));
     // duration = moment.utc(+duration).format("H:mm:ss");
     totalDuration += duration;
-
+    $(labelChange).text(
+      `press to start ${moment(totalDuration).format("mm.ss")} minutes spent`
+    );
+    
     // totalDuration = moment.utc().format("H:mm:ss");
     console.log(`end time is ${endTime}`);
     console.log(`total time is ${duration}`);
