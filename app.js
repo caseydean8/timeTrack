@@ -14,21 +14,25 @@ firebase.initializeApp(firebaseConfig);
 firebase.analytics();
 const db = firebase.database();
 
-console.log(moment().format());
-let taskID = 0;
+// console.log(moment().format());
+// let taskID = 0;
 $("button").on("click", function(event) {
   event.preventDefault();
   const task = $("input").val();
   console.log(task);
-  sendFireBase(task + " added");
+  sendFireBase(task);
   taskButtons(task);
   $("input").val("");
-  taskID++;
+  // taskID++;
 });
 
 const sendFireBase = task => {
+  const newTask = {
+    task: task, 
+    duration: 0
+  }
   db.ref()
-    .push(task)
+    .push(newTask)
     .then(err => console.log(err));
 };
 
@@ -49,23 +53,61 @@ const taskButtons = (task, key) => {
 };
 
 db.ref().on("child_added", function(snapshot) {
-  const databaseTask = snapshot.val();
+  const databaseTask = snapshot.val().task;
   const key = snapshot.key;
-  // console.log(snapshot.key);
-  console.log(databaseTask);
+  console.log(snapshot.key);
+  // console.log(databaseTask);
   taskButtons(databaseTask, key);
 });
+let startTime;
+let duration;
+let totalDuration = 0;
 
 $(document).on("click", ".task-button", function(event) {
   event.preventDefault();
-  console.log($(this).text() + " clicked");
-  console.log($(this).attr("id"));
+  let timeStart = $(this).data("start");
   const name = $(this).attr("id");
-  // console.log($(this).html("<label>"));
-  const startTime = moment().format();
-  console.log(startTime);
+  console.log(typeof(name))
+  console.log(name.task);
   const labelChange = $(`label[name="${name}"]`);
-  console.log(labelChange);
-  // console.log(labelChange[0].attributes);
-  $(labelChange).text("press to stop");
+  // let start = 0;
+  if (!timeStart) {
+    $(this).data("start", true);
+    $(labelChange).text("press to stop");
+    console.log("timeStart is false");
+    startTime = moment.utc();
+    console.log(`start time is ${startTime}`);
+    // startTaskTimer(startTime);
+  } else if (timeStart) {
+    $(this).data("start", false);
+    $(labelChange).text("press to start");
+    console.log("timeStart is true");
+    let endTime = moment.utc();
+   
+    duration = moment.duration(endTime.diff(startTime));
+    // duration = moment.utc(+duration).format("H:mm:ss");
+    totalDuration += duration;
+    
+    // totalDuration = moment.utc(totalDuration).format("H:mm:ss");
+    console.log(`end time is ${endTime}`);
+    console.log(`total time is ${duration}`);
+    console.log(`total duration is ${totalDuration}`);
+    db.ref(name).update({duration: totalDuration});
+  }
 });
+
+// parse time using 24-hour clock and use UTC to prevent DST issues
+// var start = moment.utc(startTime, "HH:mm");
+// var end = moment.utc(endTime, "HH:mm");
+
+// account for crossing over to midnight the next day
+// if (end.isBefore(start)) end.add(1, "day");
+
+// calculate the duration
+// var d = moment.duration(end.diff(start));
+
+// subtract the lunch break
+// d.subtract(30, "minutes");
+
+// format a string result
+// var s = moment.utc(+d).format("H:mm");
