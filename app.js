@@ -15,28 +15,25 @@ firebase.analytics();
 const db = firebase.database();
 
 // console.log(moment().format());
-// let taskID = 0;
 $("button").on("click", function(event) {
   event.preventDefault();
   const task = $("input").val();
   console.log(task);
   sendFireBase(task);
-  taskButtons(task);
   $("input").val("");
-  // taskID++;
 });
 
 const sendFireBase = task => {
   const newTask = {
-    task: task, 
+    task: task,
     duration: 0
-  }
+  };
   db.ref()
     .push(newTask)
-    .then(err => console.log(err));
+    .catch(err => console.log(err));
 };
 
-const taskButtons = (task, key) => {
+const taskButtons = (task, key, dbDuration) => {
   // const taskForm = $("<form>").attr("id", task);
   const taskForm = $("<form>").addClass("tasks");
   const taskLabel = $("<label>")
@@ -45,7 +42,8 @@ const taskButtons = (task, key) => {
   const taskBtn = $("<button>").attr({
     class: "task-button",
     id: key,
-    "data-start": false
+    "data-start": false,
+    "data-time": dbDuration
   });
   $(taskBtn).text(task);
   $(taskForm).append(taskLabel, taskBtn);
@@ -55,22 +53,24 @@ const taskButtons = (task, key) => {
 db.ref().on("child_added", function(snapshot) {
   const databaseTask = snapshot.val().task;
   const key = snapshot.key;
+  const dbDuration = snapshot.val().duration;
   console.log(snapshot.key);
-  // console.log(databaseTask);
-  taskButtons(databaseTask, key);
+  taskButtons(databaseTask, key, dbDuration);
 });
+
 let startTime;
 let duration;
-let totalDuration = 0;
+// let totalDuration = db.ref($(this).attr("id")).get(duration);
 
 $(document).on("click", ".task-button", function(event) {
   event.preventDefault();
   let timeStart = $(this).data("start");
+  let totalDuration = $(this).data("time");
+  console.log(totalDuration);
   const name = $(this).attr("id");
-  console.log(typeof(name))
-  console.log(name.task);
+  // let totalDuration = db.ref(name).on(duration);
+  // console.log(typeof(name))
   const labelChange = $(`label[name="${name}"]`);
-  // let start = 0;
   if (!timeStart) {
     $(this).data("start", true);
     $(labelChange).text("press to stop");
@@ -83,16 +83,16 @@ $(document).on("click", ".task-button", function(event) {
     $(labelChange).text("press to start");
     console.log("timeStart is true");
     let endTime = moment.utc();
-   
+
     duration = moment.duration(endTime.diff(startTime));
     // duration = moment.utc(+duration).format("H:mm:ss");
     totalDuration += duration;
-    
-    // totalDuration = moment.utc(totalDuration).format("H:mm:ss");
+
+    // totalDuration = moment.utc().format("H:mm:ss");
     console.log(`end time is ${endTime}`);
     console.log(`total time is ${duration}`);
     console.log(`total duration is ${totalDuration}`);
-    db.ref(name).update({duration: totalDuration});
+    db.ref(name).update({ duration: totalDuration });
   }
 });
 
