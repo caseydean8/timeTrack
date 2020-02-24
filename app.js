@@ -1,7 +1,8 @@
-const myKey = config.MY_Key;
+// const myKey = config.MY_Key;
 
 var firebaseConfig = {
-  apiKey: myKey,
+  // apiKey: myKey,
+  apiKey: "AIzaSyD98tdru_9Lj2pbzUUK2RGyuQADgvdKGJU",
   authDomain: "timetracker-9b3d1.firebaseapp.com",
   databaseURL: "https://timetracker-9b3d1.firebaseio.com",
   projectId: "timetracker-9b3d1",
