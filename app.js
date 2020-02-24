@@ -14,7 +14,6 @@ firebase.initializeApp(firebaseConfig);
 // firebase.analytics();
 const db = firebase.database();
 
-// console.log(moment().format());
 $("button").on("click", function(event) {
   event.preventDefault();
   const task = $("input").val();
@@ -34,8 +33,6 @@ const sendFireBase = task => {
 };
 
 const taskButtons = (task, key) => {
-  // const taskForm = $("<form>").attr("id", task);
-  // const taskForm = $("<form>").addClass("tasks");
   const taskForm = $("<form>").attr({id: key, "class": "tasks"});
   const taskLabel = $("<label>")
     .attr("name", key)
@@ -43,8 +40,7 @@ const taskButtons = (task, key) => {
   const taskBtn = $("<button>").attr({
     class: "task-button",
     id: key,
-    "data-start": false,
-    // "data-time": dbDuration
+    "data-start": false
   });
   const deleteBtn = $("<button>").attr({"class": "delete-button", "data-delete": key});
   $(deleteBtn).text("delete");
@@ -56,8 +52,6 @@ const taskButtons = (task, key) => {
 db.ref().on("child_added", function(snapshot) {
   const databaseTask = snapshot.val().task;
   const key = snapshot.key;
-  // const dbDuration = snapshot.val().duration;
-  console.log(snapshot.key);
   taskButtons(databaseTask, key);
 });
 
@@ -73,9 +67,6 @@ $(document).on("click", ".task-button", function(event) {
     totalDuration = snapshot.val().duration;
   });
 
-  // let totalDuration = db.ref(name).on("value", duration);
-  console.log(totalDuration);
-  // console.log(typeof(name))
   const labelChange = $(`label[name="${name}"]`);
   if (!timeStart) {
     $(this).data("start", true);
@@ -87,25 +78,19 @@ $(document).on("click", ".task-button", function(event) {
     $(this).data("start", false);
     let endTime = moment.utc();
     duration = moment.duration(endTime.diff(startTime));
-    // duration = moment.utc(+duration).format("H:mm:ss");
     totalDuration += duration;
     $(labelChange).text(
       `press to start ${moment(totalDuration).format("mm:ss")} minutes spent`
     );
-    
-    // totalDuration = moment.utc().format("H:mm:ss");
-    console.log(`end time is ${endTime}`);
-    console.log(`total time is ${duration}`);
-    console.log(`total duration is ${totalDuration}`);
     db.ref(name).update({ duration: totalDuration });
   }
 });
 
 $(document).on("click", ".delete-button", function(event) {
   event.preventDefault();
-  console.log($(this).data("delete"));
   const remove = $(this).data("delete");
   $(`#${remove}`).remove();
+  db.ref(remove).remove();
 })
 
 
