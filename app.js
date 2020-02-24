@@ -34,9 +34,10 @@ const sendFireBase = task => {
 
 const taskButtons = (task, key, duration) => {
   const taskForm = $("<form>").attr({ id: key, class: "tasks" });
+  duration = `${moment(duration).format("mm:ss")} minutes spent`;
   const taskLabel = $("<label>")
     .attr({ name: key, "data-name": task })
-    .text(task);
+    .text(`${task} ${duration}`);
   const taskBtn = $("<button>")
     .attr({
       class: "task-button",
@@ -62,6 +63,41 @@ db.ref().on("child_added", function(snapshot) {
   taskButtons(databaseTask, key, duration);
 });
 
+let timer;
+const startTaskTimer = (time, task, id) => {
+  // console.log(duration, typeof(duration));
+  clearInterval(timer);
+  timer = setInterval(increment, 1000);
+  let currentTime = time;
+  // console.log(currentTime);
+  currentTime = moment.duration(currentTime).as("seconds");
+  function increment() {
+    currentTime++;
+    let displayTime = timeConverter(currentTime);
+    // displayTime = moment(displayTime).format("mm:ss");
+    $(`label[name=${id}]`).text(`${task} . . . ${displayTime}`);
+    // $(`label[name=${id}]`).text(`${task} . . . ${currentTime}`);
+  }
+}
+
+function timeConverter(t) {
+  //  Takes the current time in seconds and convert it to minutes and seconds (mm:ss).
+  var minutes = Math.floor(t / 60);
+  var seconds = t - minutes * 60;
+
+  if (seconds < 10) {
+    seconds = "0" + seconds;
+  }
+
+  if (minutes === 0) {
+    minutes = "00";
+  } else if (minutes < 10) {
+    minutes = "0" + minutes;
+  }
+
+  return minutes + ":" + seconds;
+}
+
 let startTime;
 let duration;
 
@@ -79,18 +115,20 @@ $(document).on("click", ".task-button", function(event) {
   const labelText = $(labelChange).data("name");
   if (!timeStart) {
     $(this).data("start", true);
-    $(labelChange).text(`${labelText} . . .`);
+    // $(labelChange).text(`${labelText} . . .`);
     $(`button#${name}`).text("stop");
     startTime = moment.utc();
-    // startTaskTimer(startTime);
+    // totalDuration = moment(totalDuration).format("ss");
+    startTaskTimer(totalDuration, labelText, name);
   } else {
     $(this).data("start", false);
+    clearInterval(timer);
     let endTime = moment.utc();
     duration = moment.duration(endTime.diff(startTime));
     totalDuration += duration;
     db.ref(name).update({ duration: totalDuration });
     $(labelChange).html(
-      `${labelText} <br>${moment(totalDuration).format("mm:ss")} minutes spent`
+      `${labelText}<br>${moment(totalDuration).format("mm:ss")} minutes spent`
       );
     $(`button#${name}`).text("resume");
     }
