@@ -33,18 +33,23 @@ const sendFireBase = task => {
 };
 
 const taskButtons = (task, key) => {
-  const taskForm = $("<form>").attr({id: key, "class": "tasks"});
+  const taskForm = $("<form>").attr({ id: key, class: "tasks" });
   const taskLabel = $("<label>")
-    .attr("name", key)
-    .text("press to start");
-  const taskBtn = $("<button>").attr({
-    class: "task-button",
-    id: key,
-    "data-start": false
-  });
-  const deleteBtn = $("<button>").attr({"class": "delete-button", "data-delete": key});
-  $(deleteBtn).text("delete");
-  $(taskBtn).text(task);
+    .attr({ name: key, "data-name": task })
+    .text(task);
+  const taskBtn = $("<button>")
+    .attr({
+      class: "task-button",
+      id: key,
+      "data-start": false
+    })
+    .text("start");
+  const deleteBtn = $("<button>")
+    .attr({
+      class: "delete-button",
+      "data-delete": key
+    })
+    .text("delete");
   $(taskForm).append(taskLabel, taskBtn, deleteBtn);
   $("#task-list").append(taskForm);
 };
@@ -68,21 +73,23 @@ $(document).on("click", ".task-button", function(event) {
   });
 
   const labelChange = $(`label[name="${name}"]`);
+  const labelText = $(labelChange).data("name");
   if (!timeStart) {
     $(this).data("start", true);
-    $(labelChange).text("press to stop tracking time");
+    $(labelChange).text(`${labelText} . . .`);
+    $(`button#${name}`).text("stop");
     startTime = moment.utc();
-    console.log(`start time is ${startTime}`);
     // startTaskTimer(startTime);
   } else {
     $(this).data("start", false);
+    $(`button#${name}`).text("start");
     let endTime = moment.utc();
     duration = moment.duration(endTime.diff(startTime));
     totalDuration += duration;
-    $(labelChange).text(
-      `press to start ${moment(totalDuration).format("mm:ss")} minutes spent`
-    );
     db.ref(name).update({ duration: totalDuration });
+    $(labelChange).html(
+      `${labelText} <br>${moment(totalDuration).format("mm:ss")} minutes spent`
+    );
   }
 });
 
@@ -91,8 +98,7 @@ $(document).on("click", ".delete-button", function(event) {
   const remove = $(this).data("delete");
   $(`#${remove}`).remove();
   db.ref(remove).remove();
-})
-
+});
 
 // parse time using 24-hour clock and use UTC to prevent DST issues
 // var start = moment.utc(startTime, "HH:mm");
