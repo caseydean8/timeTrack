@@ -32,7 +32,7 @@ const sendFireBase = task => {
     .catch(err => console.log(err));
 };
 
-const taskButtons = (task, key) => {
+const taskButtons = (task, key, duration) => {
   const taskForm = $("<form>").attr({ id: key, class: "tasks" });
   const taskLabel = $("<label>")
     .attr({ name: key, "data-name": task })
@@ -42,22 +42,24 @@ const taskButtons = (task, key) => {
       class: "task-button",
       id: key,
       "data-start": false
-    })
-    .text("start");
+    });
+  (duration) ? $(taskBtn).text("resume") : $(taskBtn).text("start");
   const deleteBtn = $("<button>")
     .attr({
       class: "delete-button",
       "data-delete": key
     })
     .text("delete");
+
   $(taskForm).append(taskLabel, taskBtn, deleteBtn);
   $("#task-list").append(taskForm);
 };
 
 db.ref().on("child_added", function(snapshot) {
   const databaseTask = snapshot.val().task;
+  const duration = snapshot.val().duration
   const key = snapshot.key;
-  taskButtons(databaseTask, key);
+  taskButtons(databaseTask, key, duration);
 });
 
 let startTime;
@@ -70,7 +72,8 @@ $(document).on("click", ".task-button", function(event) {
   let totalDuration;
   db.ref(name).on("value", function(snapshot) {
     totalDuration = snapshot.val().duration;
-  });
+  })
+  // .catch(err => console.log(err));
 
   const labelChange = $(`label[name="${name}"]`);
   const labelText = $(labelChange).data("name");
@@ -82,22 +85,24 @@ $(document).on("click", ".task-button", function(event) {
     // startTaskTimer(startTime);
   } else {
     $(this).data("start", false);
-    $(`button#${name}`).text("start");
     let endTime = moment.utc();
     duration = moment.duration(endTime.diff(startTime));
     totalDuration += duration;
     db.ref(name).update({ duration: totalDuration });
     $(labelChange).html(
       `${labelText} <br>${moment(totalDuration).format("mm:ss")} minutes spent`
-    );
-  }
+      );
+    $(`button#${name}`).text("resume");
+    }
 });
 
 $(document).on("click", ".delete-button", function(event) {
   event.preventDefault();
   const remove = $(this).data("delete");
   $(`#${remove}`).remove();
-  db.ref(remove).remove();
+  db.ref(remove)
+    .remove()
+    .catch(err => console.log(err));
 });
 
 // parse time using 24-hour clock and use UTC to prevent DST issues
