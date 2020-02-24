@@ -1,5 +1,5 @@
 var firebaseConfig = {
-  apiKey: "AIzaSyD98tdru_9Lj2pbzUUK2RGyuQADgvdKGJU",
+  apiKey: config.MY_Key,
   authDomain: "timetracker-9b3d1.firebaseapp.com",
   databaseURL: "https://timetracker-9b3d1.firebaseio.com",
   projectId: "timetracker-9b3d1",
