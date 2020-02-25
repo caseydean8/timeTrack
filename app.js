@@ -37,17 +37,20 @@ const sendFireBase = task => {
 
 const taskButtons = (task, key, duration) => {
   const taskForm = $("<form>").attr({ id: key, class: "tasks" });
-  duration = `${moment(duration).format("mm:ss")} minutes spent`;
-  const taskLabel = $("<label>")
-    .attr({ name: key, "data-name": task })
-    .text(`${task} ${duration}`);
-  const taskBtn = $("<button>")
-    .attr({
-      class: "task-button",
-      id: key,
-      "data-start": false
-    });
-  (duration) ? $(taskBtn).text("resume") : $(taskBtn).text("start");
+
+  const taskBtn = $("<button>").attr({
+    class: "task-button",
+    id: key,
+    "data-start": false
+  });
+  duration ? $(taskBtn).text("resume") : $(taskBtn).text("start");
+
+  const taskLabel = $("<label>").attr({ name: key, "data-name": task });
+  duration = moment(duration).format("mm:ss");
+  duration != "00:00"
+    ? $(taskLabel).text(`${task} ${duration}`)
+    : $(taskLabel).text(task);
+
   const deleteBtn = $("<button>")
     .attr({
       class: "delete-button",
@@ -61,27 +64,79 @@ const taskButtons = (task, key, duration) => {
 
 db.ref().on("child_added", function(snapshot) {
   const databaseTask = snapshot.val().task;
-  const duration = snapshot.val().duration
+  const duration = snapshot.val().duration;
   const key = snapshot.key;
   taskButtons(databaseTask, key, duration);
 });
 
+
 let timer;
-const startTaskTimer = (time, task, id) => {
-  // console.log(duration, typeof(duration));
-  clearInterval(timer);
-  timer = setInterval(increment, 1000);
-  let currentTime = time;
-  // console.log(currentTime);
-  currentTime = moment.duration(currentTime).as("seconds");
-  function increment() {
-    currentTime++;
-    let displayTime = timeConverter(currentTime);
-    // displayTime = moment(displayTime).format("mm:ss");
-    $(`label[name=${id}]`).text(`${task} . . . ${displayTime}`);
-    // $(`label[name=${id}]`).text(`${task} . . . ${currentTime}`);
+const startTaskTimer = () => {
+  timer = setInterval(stopWatch, 1000);
+  // console.log(timer);
+};
+
+let timerDisplay;
+let counter = 0;
+// let stopwatchSpan = $("<span>");
+const stopWatch = () => {
+  timerDisplay = moment()
+    .hour(0)
+    .minute(0)
+    .second(counter++)
+    .format("HH:mm:ss");
+  console.log(timerDisplay);
+  $(labelChange).text(`${labelText} ${timerDisplay}`);
+  // console.log(stopwatchSpan);
+  // console.log(typeof(timerDisplay)); // string
+};
+
+// TASK BUTTON
+let startTime;
+let duration;
+let labelChange;
+let labelText;
+$(document).on("click", ".task-button", function(event) {
+  event.preventDefault();
+  let timeStart = $(this).data("start");
+  const name = $(this).attr("id");
+  let totalDuration;
+  db.ref(name).on("value", function(snapshot) {
+    totalDuration = snapshot.val().duration;
+  });
+
+  labelChange = $(`label[name="${name}"]`);
+  labelText = $(labelChange).data("name");
+  if (!timeStart) {
+    $(this).data("start", true);
+    // $(labelChange).text(`${labelText} . . .`);
+    $(`button#${name}`).text("stop");
+    startTime = moment.utc();
+    // totalDuration = moment(totalDuration).format("ss");
+    startTaskTimer();
+    // $(labelChange).html(`${labelText} ${stopwatchSpan} minutes spent`);
+  } else {
+    $(this).data("start", false);
+    clearInterval(timer);
+    let endTime = moment.utc();
+    duration = moment.duration(endTime.diff(startTime));
+    totalDuration += duration;
+    db.ref(name).update({ duration: totalDuration });
+    $(labelChange).html(
+      `${labelText}<br>${moment(totalDuration).format("mm:ss")} minutes spent`
+    );
+    $(`button#${name}`).text("resume");
   }
-}
+});
+
+$(document).on("click", ".delete-button", function(event) {
+  event.preventDefault();
+  const remove = $(this).data("delete");
+  $(`#${remove}`).remove();
+  db.ref(remove)
+    .remove()
+    .catch(err => console.log(err));
+});
 
 function timeConverter(t) {
   //  Takes the current time in seconds and convert it to minutes and seconds (mm:ss).
@@ -100,51 +155,6 @@ function timeConverter(t) {
 
   return minutes + ":" + seconds;
 }
-
-let startTime;
-let duration;
-
-$(document).on("click", ".task-button", function(event) {
-  event.preventDefault();
-  let timeStart = $(this).data("start");
-  const name = $(this).attr("id");
-  let totalDuration;
-  db.ref(name).on("value", function(snapshot) {
-    totalDuration = snapshot.val().duration;
-  })
-  // .catch(err => console.log(err));
-
-  const labelChange = $(`label[name="${name}"]`);
-  const labelText = $(labelChange).data("name");
-  if (!timeStart) {
-    $(this).data("start", true);
-    // $(labelChange).text(`${labelText} . . .`);
-    $(`button#${name}`).text("stop");
-    startTime = moment.utc();
-    // totalDuration = moment(totalDuration).format("ss");
-    startTaskTimer(totalDuration, labelText, name);
-  } else {
-    $(this).data("start", false);
-    clearInterval(timer);
-    let endTime = moment.utc();
-    duration = moment.duration(endTime.diff(startTime));
-    totalDuration += duration;
-    db.ref(name).update({ duration: totalDuration });
-    $(labelChange).html(
-      `${labelText}<br>${moment(totalDuration).format("mm:ss")} minutes spent`
-      );
-    $(`button#${name}`).text("resume");
-    }
-});
-
-$(document).on("click", ".delete-button", function(event) {
-  event.preventDefault();
-  const remove = $(this).data("delete");
-  $(`#${remove}`).remove();
-  db.ref(remove)
-    .remove()
-    .catch(err => console.log(err));
-});
 
 // parse time using 24-hour clock and use UTC to prevent DST issues
 // var start = moment.utc(startTime, "HH:mm");
