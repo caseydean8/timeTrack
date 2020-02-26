@@ -32,8 +32,9 @@ $("button").on("click", function(event) {
 const sendFireBase = task => {
   const newTask = {
     task: task,
-    duration: 0,
-    startTime: 0
+    dbDuration: 0,
+    firstStartTime: 0,
+    lastStartTime: 0
   };
   db.ref()
     .push(newTask)
@@ -69,7 +70,7 @@ const taskButtons = (task, key, duration) => {
 
 db.ref().on("child_added", function(snapshot) {
   const databaseTask = snapshot.val().task;
-  const duration = snapshot.val().duration;
+  const duration = snapshot.val().dbDuration;
   const key = snapshot.key;
   taskButtons(databaseTask, key, duration);
 });
@@ -104,12 +105,17 @@ $(document).on("click", ".task-button", function(event) {
   event.preventDefault();
   const btnDataStart = $(this).data("start");
   const name = $(this).attr("id");
-
+  const dbr = db.ref(name);
   let totalDuration; // move this into db.ref?
   db.ref(name).on("value", function(snapshot) {
-    totalDuration = snapshot.val().duration;
-    // startTime = snapshot.val().startTime;
+    totalDuration = snapshot.val().dbDuration;
+    btnDataStart
+      ? (startTime = snapshot.val().lastStartTime)
+      : (startTime = snapshot.val().firstStartTime);
   });
+  console.log(startTime);
+  let sendData = false;
+  if (!startTime) sendData = true;
 
   labelChange = $(`label[name="${name}"]`); // reference to task label
   labelText = $(labelChange).data("name");
@@ -118,23 +124,26 @@ $(document).on("click", ".task-button", function(event) {
     $(this).data("start", true);
     $(`button#${name}`).text("stop");
 
-    startTime = moment.utc();
+    startTime = moment().valueOf();
     // turn startTime into a number before sending to database
-    startTime += 0;
-    console.log(startTime, typeof startTime);
-    db.ref(name).update({ startTime: startTime });
-    // totalDuration = moment(totalDuration).format("ss");
+    // startTime += 0;
+    sendData
+      ? db.ref(name).update({ firstStartTime: startTime })
+      : dbr.update({ lastStartTime: startTime });
     // startTaskTimer();
     // $(labelChange).html(`${labelText} ${stopwatchSpan} minutes spent`);
   } else {
     $(this).data("start", false);
-    clearInterval(timer);
-    let endTime = moment.utc();
+    // clearInterval(timer);
+    console.log(startTime);
+    let endTime = moment();
+    // endTime += 0;
+    console.log(endTime);
     duration = moment.duration(endTime.diff(startTime));
-    console.log("duration is " + typeof duration);
+    // console.log("duration is " + typeof duration);
     totalDuration += duration;
-    console.log("total duration is " + typeof totalDuration);
-    db.ref(name).update({ duration: totalDuration });
+    // console.log("total duration is " + typeof totalDuration);
+    db.ref(name).update({ dbDuration: totalDuration });
     $(labelChange).html(
       `${labelText} ${moment(totalDuration).format("mm:ss")} minutes spent`
     );
