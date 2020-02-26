@@ -17,6 +17,9 @@ firebase.initializeApp(firebaseConfig);
 // firebase.analytics();
 const db = firebase.database();
 
+console.log(moment.utc());
+console.log(typeof moment.utc());
+
 $("button").on("click", function(event) {
   event.preventDefault();
   const task = $("input").val();
@@ -25,10 +28,12 @@ $("button").on("click", function(event) {
   $("input").val("");
 });
 
+// ---------- Update Firebase from enter task submit --------------
 const sendFireBase = task => {
   const newTask = {
     task: task,
-    duration: 0
+    duration: 0,
+    startTime: 0
   };
   db.ref()
     .push(newTask)
@@ -69,7 +74,6 @@ db.ref().on("child_added", function(snapshot) {
   taskButtons(databaseTask, key, duration);
 });
 
-
 let timer;
 const startTaskTimer = () => {
   timer = setInterval(stopWatch, 1000);
@@ -85,50 +89,60 @@ const stopWatch = () => {
     .minute(0)
     .second(counter++)
     .format("HH:mm:ss");
-  console.log(timerDisplay);
+  // console.log(timerDisplay);
   $(labelChange).text(`${labelText} ${timerDisplay}`);
   // console.log(stopwatchSpan);
   // console.log(typeof(timerDisplay)); // string
 };
 
-// TASK BUTTON
-let startTime;
+// ---------------- TASK BUTTON --------------------------
+let startTime; // move this into db.ref?
 let duration;
 let labelChange;
 let labelText;
 $(document).on("click", ".task-button", function(event) {
   event.preventDefault();
-  let timeStart = $(this).data("start");
+  const btnDataStart = $(this).data("start");
   const name = $(this).attr("id");
-  let totalDuration;
+
+  let totalDuration; // move this into db.ref?
   db.ref(name).on("value", function(snapshot) {
     totalDuration = snapshot.val().duration;
+    // startTime = snapshot.val().startTime;
   });
 
-  labelChange = $(`label[name="${name}"]`);
+  labelChange = $(`label[name="${name}"]`); // reference to task label
   labelText = $(labelChange).data("name");
-  if (!timeStart) {
+
+  if (!btnDataStart) {
     $(this).data("start", true);
-    // $(labelChange).text(`${labelText} . . .`);
     $(`button#${name}`).text("stop");
+
     startTime = moment.utc();
+    // turn startTime into a number before sending to database
+    startTime += 0;
+    console.log(startTime, typeof startTime);
+    db.ref(name).update({ startTime: startTime });
     // totalDuration = moment(totalDuration).format("ss");
-    startTaskTimer();
+    // startTaskTimer();
     // $(labelChange).html(`${labelText} ${stopwatchSpan} minutes spent`);
   } else {
     $(this).data("start", false);
     clearInterval(timer);
     let endTime = moment.utc();
     duration = moment.duration(endTime.diff(startTime));
+    console.log("duration is " + typeof duration);
     totalDuration += duration;
+    console.log("total duration is " + typeof totalDuration);
     db.ref(name).update({ duration: totalDuration });
     $(labelChange).html(
-      `${labelText}<br>${moment(totalDuration).format("mm:ss")} minutes spent`
+      `${labelText} ${moment(totalDuration).format("mm:ss")} minutes spent`
     );
     $(`button#${name}`).text("resume");
   }
 });
 
+// ------------------ Delete Button -------------------------
 $(document).on("click", ".delete-button", function(event) {
   event.preventDefault();
   const remove = $(this).data("delete");
@@ -138,6 +152,7 @@ $(document).on("click", ".delete-button", function(event) {
     .catch(err => console.log(err));
 });
 
+// --------------------------- UN used time converter -----------------------------------
 function timeConverter(t) {
   //  Takes the current time in seconds and convert it to minutes and seconds (mm:ss).
   var minutes = Math.floor(t / 60);
