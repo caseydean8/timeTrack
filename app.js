@@ -17,13 +17,12 @@ firebase.initializeApp(firebaseConfig);
 // firebase.analytics();
 const db = firebase.database();
 
-console.log(moment.utc());
-console.log(typeof moment.utc());
+console.log(moment().unix() + " timestamp on page load, Number");
+// console.log(typeof moment().unix());
 
 $("button").on("click", function(event) {
   event.preventDefault();
   const task = $("input").val();
-  console.log(task);
   sendFireBase(task);
   $("input").val("");
 });
@@ -103,17 +102,16 @@ let labelChange;
 let labelText;
 $(document).on("click", ".task-button", function(event) {
   event.preventDefault();
-  const btnDataStart = $(this).data("start");
+  const btnDataStart = $(this).data("start"); // begins as false
+  console.log(btnDataStart);
   const name = $(this).attr("id");
   const dbr = db.ref(name);
   let totalDuration; // move this into db.ref?
-  db.ref(name).on("value", function(snapshot) {
+  dbr.on("value", function(snapshot) {
     totalDuration = snapshot.val().dbDuration;
-    btnDataStart
-      ? (startTime = snapshot.val().lastStartTime)
-      : (startTime = snapshot.val().firstStartTime);
+    startTime = snapshot.val().lastStartTime;
   });
-  console.log(startTime);
+  console.log(startTime + " before conditional statements");
   let sendData = false;
   if (!startTime) sendData = true;
 
@@ -121,33 +119,39 @@ $(document).on("click", ".task-button", function(event) {
   labelText = $(labelChange).data("name");
 
   if (!btnDataStart) {
-    $(this).data("start", true);
-    $(`button#${name}`).text("stop");
-
-    startTime = moment().valueOf();
     // turn startTime into a number before sending to database
-    // startTime += 0;
+    startTime = moment().unix();
+    // startTime = moment();
+    console.log(startTime + " if data-start is false");
     sendData
-      ? db.ref(name).update({ firstStartTime: startTime })
+      ? dbr.update({ firstStartTime: startTime, lastStartTime: startTime })
       : dbr.update({ lastStartTime: startTime });
+    $(`button#${name}`).text("stop");
+    $(this).data("start", true);
     // startTaskTimer();
     // $(labelChange).html(`${labelText} ${stopwatchSpan} minutes spent`);
   } else {
-    $(this).data("start", false);
     // clearInterval(timer);
-    console.log(startTime);
-    let endTime = moment();
+    console.log(startTime + " start time when data-start is true");
+    const endTime = moment().unix();
     // endTime += 0;
-    console.log(endTime);
-    duration = moment.duration(endTime.diff(startTime));
+    console.log(endTime + " end time");
+    // console.log(moment(startTime).fromNow("ss"))
+    // duration = moment.subtract(startTime);
+    duration = endTime - startTime;
     // console.log("duration is " + typeof duration);
     totalDuration += duration;
+    // const secs = 456;
+
+    const display = moment.utc(totalDuration * 1000).format("HH:mm:ss");
+    console.log(display);
     // console.log("total duration is " + typeof totalDuration);
-    db.ref(name).update({ dbDuration: totalDuration });
+    dbr.update({ dbDuration: totalDuration });
     $(labelChange).html(
-      `${labelText} ${moment(totalDuration).format("mm:ss")} minutes spent`
+      `${labelText} ${display} minutes spent`
     );
     $(`button#${name}`).text("resume");
+    $(this).data("start", false);
   }
 });
 
