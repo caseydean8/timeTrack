@@ -18,7 +18,7 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
 console.log(moment().unix() + " timestamp on page load, Number");
-// console.log(typeof moment().unix());
+console.log(moment());
 
 $("button").on("click", function(event) {
   event.preventDefault();
@@ -111,7 +111,6 @@ $(document).on("click", ".task-button", function(event) {
     totalDuration = snapshot.val().dbDuration;
     startTime = snapshot.val().lastStartTime;
   });
-  console.log(startTime + " before conditional statements");
   let sendData = false;
   if (!startTime) sendData = true;
 
@@ -121,6 +120,7 @@ $(document).on("click", ".task-button", function(event) {
   if (!btnDataStart) {
     // turn startTime into a number before sending to database
     startTime = moment().unix();
+    // startObj = moment();
     // startTime = moment();
     console.log(startTime + " if data-start is false");
     sendData
@@ -129,26 +129,23 @@ $(document).on("click", ".task-button", function(event) {
     $(`button#${name}`).text("stop");
     $(this).data("start", true);
     // startTaskTimer();
-    // $(labelChange).html(`${labelText} ${stopwatchSpan} minutes spent`);
+    $(labelChange).html(`${labelText} . . .`);
   } else {
     // clearInterval(timer);
-    console.log(startTime + " start time when data-start is true");
     const endTime = moment().unix();
-    // endTime += 0;
-    console.log(endTime + " end time");
-    // console.log(moment(startTime).fromNow("ss"))
-    // duration = moment.subtract(startTime);
+    // endObj = moment();
+    // difference = moment.duration(endObj.diff(startObj));
+    // console.log(difference + "difference")
+    // difFormat = moment(difference).format("mm:ss");
+    // console.log(difFormat);
     duration = endTime - startTime;
-    // console.log("duration is " + typeof duration);
     totalDuration += duration;
-    // const secs = 456;
-
-    const display = moment.utc(totalDuration * 1000).format("HH:mm:ss");
-    console.log(display);
-    // console.log("total duration is " + typeof totalDuration);
+    // const display = moment.utc(totalDuration * 1000).format("HH:mm:ss");
+    // const display = timeConverter(totalDuration);
+    const display = hhmmss(totalDuration);
     dbr.update({ dbDuration: totalDuration });
     $(labelChange).html(
-      `${labelText} ${display} minutes spent`
+      `${labelText} ${display}`
     );
     $(`button#${name}`).text("resume");
     $(this).data("start", false);
@@ -166,6 +163,16 @@ $(document).on("click", ".delete-button", function(event) {
 });
 
 // --------------------------- UN used time converter -----------------------------------
+
+const hhmmss = (secs) => {
+  let minutes = Math.floor(secs / 60);
+  secs = secs%60;
+  let hours = Math.floor(minutes/60)
+  minutes = minutes%60;
+  return `${hours}:${minutes}:${secs}`;
+  // return hours + ":" + minutes + ":" + secs; for old browsers
+}
+
 function timeConverter(t) {
   //  Takes the current time in seconds and convert it to minutes and seconds (mm:ss).
   var minutes = Math.floor(t / 60);
@@ -183,6 +190,8 @@ function timeConverter(t) {
 
   return minutes + ":" + seconds;
 }
+
+
 
 // parse time using 24-hour clock and use UTC to prevent DST issues
 // var start = moment.utc(startTime, "HH:mm");
