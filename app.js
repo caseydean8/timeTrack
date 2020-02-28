@@ -173,6 +173,8 @@ $(document).on("click", ".clear-button", function(event) {
       dataStart: false
     })
     .catch(err => console.log(err));
+    // $(`label[name="${clear}"]`).text()
+    $(`button#${clear}`).text("start");
 });
 
 // ---------------- NOT USED (yet)---------------------------------------------------
