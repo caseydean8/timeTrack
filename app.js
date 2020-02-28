@@ -47,11 +47,11 @@ const taskButtons = (task, duration, taskRunning, key) => {
 
   const taskBtn = $("<button>").attr({
     class: "task-button",
-    id: key
-    // "data-start": false
+    id: key,
+    style: "background-color: yellow"
   });
-  duration ? $(taskBtn).text("resume") : $(taskBtn).text("start");
-  if (taskRunning) $(taskBtn).text("stop");
+  duration ? $(taskBtn).text("resume") : $(taskBtn).attr({style: "background-color: green"}).text("start");
+  if (taskRunning) $(taskBtn).attr({style: "background-color: red"}).text("stop");
 
   const taskLabel = $("<label>").attr({ name: key, "data-name": task });
   taskRunning
