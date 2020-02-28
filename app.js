@@ -173,7 +173,9 @@ $(document).on("click", ".clear-button", function(event) {
       dataStart: false
     })
     .catch(err => console.log(err));
-    // $(`label[name="${clear}"]`).text()
+    const label = $(`label[name="${clear}"]`);
+    const task = $(label).data("name");
+    $(label).text(`${task} 0:00:00`);
     $(`button#${clear}`).text("start");
 });
 
