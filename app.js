@@ -41,6 +41,7 @@ const sendFireBase = task => {
     .catch(err => console.log(err));
 };
 
+// ==================== TASK BUTTONS ===============================
 const taskButtons = (task, duration, taskRunning, key) => {
   const taskForm = $("<form>").attr({ id: key, class: "tasks" });
 
@@ -64,7 +65,11 @@ const taskButtons = (task, duration, taskRunning, key) => {
     })
     .text("delete");
 
-  $(taskForm).append(taskLabel, taskBtn, deleteBtn);
+  const clearBtn = $("<button>")
+    .attr({ class: "clear-button", "data-clear": key })
+    .text("reset");
+
+  $(taskForm).append(taskLabel, taskBtn, clearBtn, deleteBtn);
   $("#task-list").append(taskForm);
 };
 
@@ -78,12 +83,6 @@ db.ref().on("child_added", function(snapshot) {
   console.log("child added");
   taskButtons(databaseTask, duration, taskRunning, key);
 });
-
-let timer;
-const startTaskTimer = () => {
-  timer = setInterval(stopWatch, 1000);
-  // console.log(timer);
-};
 
 // ---------------- TASK BUTTON --------------------------
 let startTime; // move this into db.ref?
@@ -162,7 +161,28 @@ $(document).on("click", ".delete-button", function(event) {
     .catch(err => console.log(err));
 });
 
-// ---------------- NOT USED ---------------------------------------------------
+// -------------------- Clear Button -----------------------
+$(document).on("click", ".clear-button", function(event) {
+  event.preventDefault();
+  const clear = $(this).data("clear");
+  db.ref(clear)
+    .update({
+      dbDuration: 0,
+      firstStartTime: 0,
+      lastStartTime: 0,
+      dataStart: false
+    })
+    .catch(err => console.log(err));
+});
+
+// ---------------- NOT USED (yet)---------------------------------------------------
+
+let timer;
+const startTaskTimer = () => {
+  timer = setInterval(stopWatch, 1000);
+  // console.log(timer);
+};
+
 function timeConverter(t) {
   //  Takes the current time in seconds and convert it to minutes and seconds (mm:ss).
   var minutes = Math.floor(t / 60);
