@@ -51,12 +51,11 @@ const taskButtons = (task, duration, taskRunning, key) => {
   });
   duration ? $(taskBtn).text("resume") : $(taskBtn).text("start");
   if (taskRunning) $(taskBtn).text("stop");
-  
+
   const taskLabel = $("<label>").attr({ name: key, "data-name": task });
-  // duration = moment(duration).format("mm:ss");
-  // duration != "00:00"
-  $(taskLabel).text(`${task} ${hhmmss(duration)} ${taskRunning}`)
-    // : $(taskLabel).text(task);
+  taskRunning
+    ? $(taskLabel).text(`${task}. . . in progress`)
+    : $(taskLabel).text(`${task} ${hhmmss(duration)}`);
 
   const deleteBtn = $("<button>")
     .attr({
@@ -76,7 +75,7 @@ db.ref().on("child_added", function(snapshot) {
   const duration = snapshot.val().dbDuration;
   const taskRunning = snapshot.val().dataStart;
   const key = snapshot.key;
-  console.log("child added")
+  console.log("child added");
   taskButtons(databaseTask, duration, taskRunning, key);
 });
 
@@ -105,7 +104,7 @@ $(document).on("click", ".task-button", function(event) {
   console.log("task running is " + taskRunning);
   let sendData = false;
   if (!startTime) sendData = true;
-  console.log("send data " + sendData)
+  console.log("send data " + sendData);
 
   labelChange = $(`label[name="${name}"]`); // reference to task label
   labelText = $(labelChange).data("name");
@@ -115,11 +114,12 @@ $(document).on("click", ".task-button", function(event) {
     startTime = moment().unix();
     // startObj = moment();
     console.log(startTime + " if task runnin is false");
-    if (sendData) dbr.update({ firstStartTime: startTime, lastStartTime: startTime });
+    if (sendData)
+      dbr.update({ firstStartTime: startTime, lastStartTime: startTime });
     dbr.update({ lastStartTime: startTime, dataStart: true });
     $(`button#${name}`).text("stop");
     // startTaskTimer();
-    $(labelChange).html(`${labelText} . . .`);
+    $(labelChange).text(`${labelText} . . .`);
   } else {
     // clearInterval(timer);
     const endTime = moment().unix();
@@ -144,8 +144,10 @@ $(document).on("click", ".task-button", function(event) {
 const hhmmss = secs => {
   let minutes = Math.floor(secs / 60);
   secs = secs % 60;
+  if (secs < 10) secs = `0${secs}`;
   let hours = Math.floor(minutes / 60);
   minutes = minutes % 60;
+  if (minutes < 10) minutes = `0${minutes}`;
   return `${hours}:${minutes}:${secs}`;
   // return hours + ":" + minutes + ":" + secs; for old browsers
 };
@@ -159,7 +161,6 @@ $(document).on("click", ".delete-button", function(event) {
     .remove()
     .catch(err => console.log(err));
 });
-
 
 // ---------------- NOT USED ---------------------------------------------------
 function timeConverter(t) {
