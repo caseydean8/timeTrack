@@ -50,12 +50,19 @@ const taskButtons = (key, data) => {
     id: key,
     style: "background-color: yellow"
   });
-  data.duration ? $(taskBtn).text("resume") : $(taskBtn).attr({style: "background-color: green"}).text("start");
-  if (data.taskRunning) $(taskBtn).attr({style: "background-color: red"}).text("stop");
+  data.duration
+    ? $(taskBtn).text("resume")
+    : $(taskBtn)
+        .attr({ style: "background-color: green" })
+        .text("start");
+  if (data.taskRunning)
+    $(taskBtn)
+      .attr({ style: "background-color: red" })
+      .text("stop");
 
   const taskLabel = $("<label>").attr({ name: key, "data-name": data.task });
   data.taskRunning
-    ? $(taskLabel).text(`${data.task}. . . in progress`)
+    ? $(taskLabel).text(`${data.task}. . . `)
     : $(taskLabel).text(`${data.task} ${hhmmss(data.duration)}`);
 
   const deleteBtn = $("<button>")
@@ -82,62 +89,75 @@ db.ref().on("child_added", function(snapshot) {
     duration: snapshot.val().dbDuration,
     taskRunning: snapshot.val().taskRunning,
     start: snapshot.val().lastStartTime
-  }
+  };
   taskButtons(key, dbData);
 });
 
 // ---------------- TASK BUTTON --------------------------
-let startTime; // move this into db.ref?
+// let startTime; // move this into db.ref?
 let duration;
 let labelChange;
 let labelText;
+let intervalId;
+
 $(document).on("click", ".task-button", function(event) {
   event.preventDefault();
   // let taskRunning = false; // begins as false
   const name = $(this).attr("id");
   const dbr = db.ref(name);
   let totalDuration; // move this into db.ref?
+  // let taskRunning;
   dbr.on("value", function(snapshot) {
     totalDuration = snapshot.val().dbDuration;
     startTime = snapshot.val().lastStartTime;
-    taskRunning = snapshot.val().dataStart;
+    taskRunning = snapshot.val().taskRunning;
   });
-  console.log("task running is " + taskRunning);
   let sendData = false;
   if (!startTime) sendData = true;
-  console.log("send data " + sendData);
 
   labelChange = $(`label[name="${name}"]`); // reference to task label
   labelText = $(labelChange).data("name");
 
+  console.log(intervalId);
+  const counter = () => {
+    // if(!taskRunning) intervalId = setInterval(increment, 1000);
+    intervalId = setInterval(increment, 1000);
+  };
+  const stop = () => {
+    clearInterval(intervalId);
+  };
+  
+  const increment = () => {
+    totalDuration++;
+    let runDuration = hhmmss(totalDuration);
+    $(labelChange).text(`${labelText} ${runDuration}`);
+  };
+
   if (!taskRunning) {
+    // console.log(taskRunning);
     // turn startTime into a number before sending to database
     startTime = moment().unix();
-    // startObj = moment();
-    console.log(startTime + " if task runnin is false");
+    counter();
+    // taskRunning = true;
     if (sendData)
       dbr.update({ firstStartTime: startTime, lastStartTime: startTime });
-    dbr.update({ lastStartTime: startTime, dataStart: true });
+    dbr.update({ lastStartTime: startTime, taskRunning: true });
     $(`button#${name}`).text("stop");
-    // startTaskTimer();
-    $(labelChange).text(`${labelText} . . .`);
+    // $(labelChange).text(`${labelText} ${runDuration}`);
   } else {
-    // clearInterval(timer);
+    console.log("fired else statement");
+    // stop();
+    clearInterval(intervalId);
+    taskRunning = false;
     const endTime = moment().unix();
-    // endObj = moment();
-    // difference = moment.duration(endObj.diff(startObj));
-    // console.log(difference + "difference")
-    // difFormat = moment(difference).format("mm:ss");
-    // console.log(difFormat);
+    
     duration = endTime - startTime;
     totalDuration += duration;
-    // const display = moment.utc(totalDuration * 1000).format("HH:mm:ss");
-    // const display = timeConverter(totalDuration);
+   
     const display = hhmmss(totalDuration);
-    dbr.update({ dbDuration: totalDuration, dataStart: false });
-    $(labelChange).html(`${labelText} ${display}`);
+    dbr.update({ dbDuration: totalDuration, taskRunning: false });
+    $(labelChange).text(`${labelText} ${display}`);
     $(`button#${name}`).text("resume");
-    // $(this).data("start", false);
   }
 });
 
@@ -153,13 +173,13 @@ const hhmmss = secs => {
   // return hours + ":" + minutes + ":" + secs; for old browsers
 };
 
-const counter = () => {
-  let intervalId = setInterval(increment, 1000);
-}
-const increment = () => {
-  duration++;
-  let runDuration = hhmmss(duration);
-}
+// const counter = () => {
+//   let intervalId = setInterval(increment, 1000);
+// }
+// const increment = () => {
+//   duration++;
+//   let runDuration = hhmmss(duration);
+// }
 
 // ------------------ Delete Button -------------------------
 $(document).on("click", ".delete-button", function(event) {
@@ -180,13 +200,13 @@ $(document).on("click", ".clear-button", function(event) {
       dbDuration: 0,
       firstStartTime: 0,
       lastStartTime: 0,
-      dataStart: false
+      taskRunning: false
     })
     .catch(err => console.log(err));
-    const label = $(`label[name="${clear}"]`);
-    const task = $(label).data("name");
-    $(label).text(`${task} 0:00:00`);
-    $(`button#${clear}`).text("start");
+  const label = $(`label[name="${clear}"]`);
+  const task = $(label).data("name");
+  $(label).text(`${task} 0:00:00`);
+  $(`button#${clear}`).text("start");
 });
 
 // ---------------- NOT USED (yet)---------------------------------------------------
