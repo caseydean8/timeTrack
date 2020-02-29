@@ -34,7 +34,7 @@ const sendFireBase = task => {
     dbDuration: 0,
     firstStartTime: 0,
     lastStartTime: 0,
-    dataStart: false
+    taskRunning: false
   };
   db.ref()
     .push(newTask)
@@ -42,7 +42,7 @@ const sendFireBase = task => {
 };
 
 // ==================== TASK BUTTONS ===============================
-const taskButtons = (task, duration, taskRunning, key) => {
+const taskButtons = (key, data) => {
   const taskForm = $("<form>").attr({ id: key, class: "tasks" });
 
   const taskBtn = $("<button>").attr({
@@ -50,13 +50,13 @@ const taskButtons = (task, duration, taskRunning, key) => {
     id: key,
     style: "background-color: yellow"
   });
-  duration ? $(taskBtn).text("resume") : $(taskBtn).attr({style: "background-color: green"}).text("start");
-  if (taskRunning) $(taskBtn).attr({style: "background-color: red"}).text("stop");
+  data.duration ? $(taskBtn).text("resume") : $(taskBtn).attr({style: "background-color: green"}).text("start");
+  if (data.taskRunning) $(taskBtn).attr({style: "background-color: red"}).text("stop");
 
-  const taskLabel = $("<label>").attr({ name: key, "data-name": task });
-  taskRunning
-    ? $(taskLabel).text(`${task}. . . in progress`)
-    : $(taskLabel).text(`${task} ${hhmmss(duration)}`);
+  const taskLabel = $("<label>").attr({ name: key, "data-name": data.task });
+  data.taskRunning
+    ? $(taskLabel).text(`${data.task}. . . in progress`)
+    : $(taskLabel).text(`${data.task} ${hhmmss(data.duration)}`);
 
   const deleteBtn = $("<button>")
     .attr({
@@ -76,12 +76,14 @@ const taskButtons = (task, duration, taskRunning, key) => {
 // window.onload = taskButtons();
 
 db.ref().on("child_added", function(snapshot) {
-  const databaseTask = snapshot.val().task;
-  const duration = snapshot.val().dbDuration;
-  const taskRunning = snapshot.val().dataStart;
   const key = snapshot.key;
-  console.log("child added");
-  taskButtons(databaseTask, duration, taskRunning, key);
+  const dbData = {
+    task: snapshot.val().task,
+    duration: snapshot.val().dbDuration,
+    taskRunning: snapshot.val().taskRunning,
+    start: snapshot.val().lastStartTime
+  }
+  taskButtons(key, dbData);
 });
 
 // ---------------- TASK BUTTON --------------------------
@@ -151,6 +153,14 @@ const hhmmss = secs => {
   // return hours + ":" + minutes + ":" + secs; for old browsers
 };
 
+const counter = () => {
+  let intervalId = setInterval(increment, 1000);
+}
+const increment = () => {
+  duration++;
+  let runDuration = hhmmss(duration);
+}
+
 // ------------------ Delete Button -------------------------
 $(document).on("click", ".delete-button", function(event) {
   event.preventDefault();
@@ -206,7 +216,7 @@ function timeConverter(t) {
 }
 
 let timerDisplay;
-let counter = 0;
+// let counter = 0;
 // let stopwatchSpan = $("<span>");
 const stopWatch = () => {
   timerDisplay = moment()
