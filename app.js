@@ -165,7 +165,7 @@ $(document).on("click", ".task-button", function(event) {
       .attr({ style: "border-color: red" })
       .text("stop");
   } else {
-    clearInterval(stopWatch.intervalId);
+    clearTimeout(stopWatch.intervalId);
     !taskRunning;
     taskDuration(startTime, name);
 
@@ -190,6 +190,7 @@ $(document).on("click", ".clear-button", function(event) {
   })
   console.log(startTime);
   if (taskRunning) {
+
     taskDuration(startTime, clear);
     counter();
     $(this).text("reset");
@@ -224,20 +225,17 @@ const taskDuration = (start, id) => {
 
 // +++++++++++++++++++++++++ INCREMENT ++++++++++++++++++++++++++++++++++++++
 const counter = () => {
-  console.log(stopWatch.counter);
-  stopWatch.intervalId = setInterval(increment, 1000);
-  console.log("counter hit");
-  stopWatch.counter = true;
-  console.log(stopWatch.counter);
+  clearTimeout(sW.intervalId);
+  const increment = () => {
+    stopWatch.totalDuration++;
+    runDuration = hhmmss(stopWatch.totalDuration);
+    $(stopWatch.taskLabel).text(`${stopWatch.labelText} ${runDuration}`);
+    stopWatch.intervalId = setTimeout(increment, 1000);
+  };
+  stopWatch.intervalId = setTimeout(increment, 1000);
 };
 
-const increment = () => {
-  stopWatch.totalDuration++;
-  runDuration = hhmmss(stopWatch.totalDuration);
-  $(stopWatch.taskLabel).text(`${stopWatch.labelText} ${runDuration}`);
-  console.log(stopWatch.counter);
-  // console.log("increment hit")
-};
+
 
 // --------------------------- time converter -----------------------------------
 const hhmmss = secs => {
