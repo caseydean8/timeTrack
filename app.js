@@ -155,7 +155,7 @@ $(document).on("click", ".task-button", function(event) {
   stopWatch.labelText = $(stopWatch.taskLabel).data("name");
 
   if (!taskRunning) {
-    taskRunning;
+    sW.taskRunning;
     startTime = moment().unix();
     counter();
     if (sendData)
@@ -194,20 +194,20 @@ $(document).on("click", ".clear-button", function(event) {
     counter();
     $(this).text("reset");
   } 
-  // else {
-  //   db.ref(clear)
-  //     .update({
-  //       dbDuration: 0,
-  //       firstStartTime: 0,
-  //       lastStartTime: 0,
-  //       taskRunning: false
-  //     })
-  //     .catch(err => console.log(err));
-  //   const label = $(`label[name="${clear}"]`);
-  //   const task = $(label).data("name");
-  //   $(label).text(`${task} 0:00:00`);
-  //   $(`button#${clear}`).text("start");
-  // }
+  else {
+    db.ref(clear)
+      .update({
+        dbDuration: 0,
+        firstStartTime: 0,
+        lastStartTime: 0,
+        taskRunning: false
+      })
+      .catch(err => console.log(err));
+    sW.taskLabel = $(`label[name="${clear}"]`);
+    sW.labelText = $(sW.taskLabel).data("name");
+    $(sW.taskLabel).text(`${sW.labelText} 0:00:00`);
+    $(`button#${clear}`).text("start");
+  }
 });
 // *********************** DURATION CALCULATOR ***************************
 const taskDuration = (start, id) => {
