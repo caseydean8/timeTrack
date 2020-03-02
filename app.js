@@ -24,16 +24,19 @@ $("button").on("click", function(event) {
   event.preventDefault();
   const task = $("input").val();
   sendFireBase(task);
+  clearTimeout(sW.intervalId);
   $("input").val("");
 });
 
 // ---------- Update Firebase from enter task submit --------------
 const sendFireBase = task => {
+  // clearTimeout(sW.intervalId);
   const newTask = {
     task: task,
     dbDuration: 0,
     firstStartTime: 0,
     lastStartTime: 0,
+    endTime: 0,
     taskRunning: false
   };
   db.ref()
@@ -41,27 +44,37 @@ const sendFireBase = task => {
     .catch(err => console.log(err));
 };
 
+
+db.ref().on("child_added", function(snapshot) {
+  const key = snapshot.key;
+  const dbData = {
+    task: snapshot.val().task,
+    duration: snapshot.val().dbDuration,
+    taskRunning: snapshot.val().taskRunning,
+    start: snapshot.val().lastStartTime
+  };
+  taskButtons(key, dbData);
+});
+
+
 // ==================== TASK BUTTONS ===============================
-// let stopWatch.intervalId;
-// let stopWatch.totalDuration;
-// let stopWatch.taskLabel;
-// let stopWatch.labelText;
 
 const stopWatch = {
+  taskId: "",
   intervalId: 0,
   totalDuration: 0,
   startTime: 0,
-  taskLabel: "",
+  taskLabel: Object,
   labelText: "",
   taskRunning: false,
   counter: false
 };
 const sW = stopWatch;
-// console.log(sW);
+console.log(sW.intervalId);
 
 const taskButtons = (key, data) => {
-  stopWatch.taskRunning = data.taskRunning;
-  console.log(stopWatch.taskRunning + " task running");
+  // stopWatch.taskRunning = data.taskRunning;
+  // console.log(stopWatch.taskRunning + " task running");
   const taskForm = $("<form>").attr({ id: key, class: "tasks" });
 
   const taskBtn = $("<button>").attr({
@@ -69,7 +82,7 @@ const taskButtons = (key, data) => {
     id: key,
     style: "border-color: yellow"
   });
-
+  // determine task button text and color
   data.duration
     ? $(taskBtn).text("resume")
     : $(taskBtn)
@@ -85,9 +98,9 @@ const taskButtons = (key, data) => {
     name: key,
     "data-name": data.task
   });
-  stopWatch.taskRunning = data.taskRunning;
-  stopWatch.labelText = data.task;
-  stopWatch.totalDuration = data.duration;
+  // stopWatch.taskRunning = data.taskRunning;
+  // stopWatch.labelText = data.task;
+  // stopWatch.totalDuration = data.duration;
   // console.log(data.duration + " data.duration");
   // console.log(stopWatch.totalDuration);
 
@@ -95,7 +108,7 @@ const taskButtons = (key, data) => {
   // console.log(data.taskRunning);
   // if (data.taskRunning) {
   //   stop();
-  //   taskDuration(data.start, key);
+  //   durationCalc(data.start, key);
   //   counter();
   // }
 
@@ -125,17 +138,6 @@ const taskButtons = (key, data) => {
 };
 
 
-db.ref().on("child_added", function(snapshot) {
-  const key = snapshot.key;
-  const dbData = {
-    task: snapshot.val().task,
-    duration: snapshot.val().dbDuration,
-    taskRunning: snapshot.val().taskRunning,
-    start: snapshot.val().lastStartTime
-  };
-  taskButtons(key, dbData);
-});
-
 // ---------------- TASK BUTTON --------------------------
 
 $(document).on("click", ".task-button", function(event) {
@@ -144,20 +146,28 @@ $(document).on("click", ".task-button", function(event) {
   const dbr = db.ref(name);
 
   dbr.on("value", function(snapshot) {
-    stopWatch.totalDuration = snapshot.val().dbDuration;
+    taskDuration = snapshot.val().dbDuration;
     startTime = snapshot.val().lastStartTime;
     taskRunning = snapshot.val().taskRunning;
   });
   let sendData = false;
   if (!startTime) sendData = true;
 
-  stopWatch.taskLabel = $(`label[name="${name}"]`); // reference to task label
-  stopWatch.labelText = $(stopWatch.taskLabel).data("name");
-
+  stopWatch.taskLabel = $(`label[name="${name}"]`); 
+  
+  // reference to task label
+  // taskLabel = {
+  //   label: $(`label[name="${name}"]`),
+  //   name: name
+  // }
+  // console.log(sW.taskLabel);
+  stopWatch.labelText = $(sW.taskLabel).data("name");
+  // let taskInterval = 0;
   if (!taskRunning) {
     sW.taskRunning;
+    sW.taskId = name;
     startTime = moment().unix();
-    counter();
+    counter(taskDuration);
     if (sendData)
       dbr.update({ firstStartTime: startTime, lastStartTime: startTime });
     dbr.update({ lastStartTime: startTime, taskRunning: true });
@@ -165,12 +175,12 @@ $(document).on("click", ".task-button", function(event) {
       .attr({ style: "border-color: red" })
       .text("stop");
   } else {
-    clearTimeout(stopWatch.intervalId);
+    clearTimeout(sW.intervalId);
     !taskRunning;
-    taskDuration(startTime, name);
+    durationCalc(startTime, taskDuration, name);
 
     dbr.update({ taskRunning: false });
-    // $(stopWatch.taskLabel).text(`${stopWatch.labelText} ${display}`);
+    $(stopWatch.taskLabel).text(`${stopWatch.labelText}`);
     $(`button#${name}`)
       .attr({ style: "border-color: yellow" })
       .text("resume");
@@ -185,14 +195,15 @@ $(document).on("click", ".clear-button", function(event) {
   stopWatch.taskLabel = $(`label[name="${clear}"]`);
   stopWatch.labelText = $(stopWatch.taskLabel).data("name");
   db.ref(clear).on("value", function(snapshot) {
-    taskRunning = snapshot.val().taskRunning;
-    startTime = snapshot.val().lastStartTime;
+    clrTaskRunning = snapshot.val().taskRunning;
+    clrStartTime = snapshot.val().lastStartTime;
+    clrDuration = snapshot.val().dbDuration
   })
-  console.log(startTime);
-  if (taskRunning) {
+  // console.log(startTime);
+  if (clrTaskRunning) {
 
-    taskDuration(startTime, clear);
-    counter();
+    durationCalc(clrStartTime, clrDuration, clear);
+    counter(clrDuration);
     $(this).text("reset");
   } 
   else {
@@ -211,28 +222,29 @@ $(document).on("click", ".clear-button", function(event) {
   }
 });
 // *********************** DURATION CALCULATOR ***************************
-const taskDuration = (start, id) => {
-  // console.log(start + " start time in duration calc");
-  const end = moment().unix();
-  // console.log(end + " end time in duration calc");
-  const duration = end - start;
-  // console.log(duration + " duration time in duration calc")
-  // console.log(stopWatch.totalDuration + " before");
-  stopWatch.totalDuration += duration;
-  // console.log(stopWatch.totalDuration + " after");
-  db.ref(id).update({ dbDuration: stopWatch.totalDuration });
+const durationCalc = (start, prevDuration, id) => {
+  let end = moment().unix();
+  db.ref(id).update({ endTime: end });
+  db.ref(id).on("value", function(snapshot) {
+    end = snapshot.val().endTime;
+  })
+  const latestDuration = end - start;
+  const currentDuration = prevDuration + latestDuration;
+  db.ref(id).update({ dbDuration: currentDuration });
 };
 
 // +++++++++++++++++++++++++ INCREMENT ++++++++++++++++++++++++++++++++++++++
-const counter = () => {
+const counter = (duration) => {
+  // console.log(sW.intervalId);
   clearTimeout(sW.intervalId);
   const increment = () => {
-    stopWatch.totalDuration++;
-    runDuration = hhmmss(stopWatch.totalDuration);
+    duration++;
+    runDuration = hhmmss(duration);
     $(stopWatch.taskLabel).text(`${stopWatch.labelText} ${runDuration}`);
-    stopWatch.intervalId = setTimeout(increment, 1000);
+    sW.intervalId = setTimeout(increment, 1000);
+    // sW.intervalId = 0;
   };
-  stopWatch.intervalId = setTimeout(increment, 1000);
+  interval = setTimeout(increment, 1000);
 };
 
 
@@ -265,6 +277,8 @@ $(document).on("click", ".delete-button", function(event) {
 const stop = () => {
   clearInterval(stopWatch.intervalId);
 };
+
+// less elegant version of hhmmss()
 function timeConverter(t) {
   //  Takes the current time in seconds and convert it to minutes and seconds (mm:ss).
   var minutes = Math.floor(t / 60);
