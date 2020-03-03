@@ -17,9 +17,6 @@ firebase.initializeApp(firebaseConfig);
 // firebase.analytics();
 const db = firebase.database();
 
-// console.log(moment().unix() + " timestamp on page load, Number");
-// console.log(moment());
-
 $("button").on("click", function(event) {
   event.preventDefault();
   const task = $("input").val();
@@ -30,7 +27,6 @@ $("button").on("click", function(event) {
 
 // ---------- Update Firebase from enter task submit --------------
 const sendFireBase = task => {
-  // clearTimeout(sW.intervalId);
   const newTask = {
     task: task,
     dbDuration: 0,
@@ -63,21 +59,17 @@ const stopWatch = {
   totalDuration: 0,
   startTime: 0,
   taskLabel: "",
-  // prevTaskLabel: "",
   labelText: "",
-  // prevLabelText: "",
   taskRunning: false,
   counter: false
 };
+const sW = stopWatch;
 taskLabelArr = [];
 labelTextArr = [];
 
-const sW = stopWatch;
 console.log(sW.intervalId);
 
 const taskButtons = (key, data) => {
-  // stopWatch.taskRunning = data.taskRunning;
-  // console.log(stopWatch.taskRunning + " task running");
   const taskForm = $("<form>").attr({ id: key, class: "tasks" });
 
   const taskBtn = $("<button>").attr({
@@ -101,13 +93,13 @@ const taskButtons = (key, data) => {
     name: key,
     "data-name": data.task
   });
-  // stopWatch.taskRunning = data.taskRunning;
-  // stopWatch.labelText = data.task;
-  // stopWatch.totalDuration = data.duration;
-  // console.log(data.duration + " data.duration");
-  // console.log(stopWatch.totalDuration);
 
-  $(stopWatch.taskLabel).text(`${data.task}`);
+  let inProg = "";
+  if (data.taskRunning) inProg = "in progress";
+  console.log(data.task, data.duration, inProg);
+  $(stopWatch.taskLabel).text(
+    `${data.task} ${hhmmss(data.duration)} ${inProg}`
+  );
   // console.log(data.taskRunning);
   // if (data.taskRunning) {
   //   stop();
@@ -160,9 +152,9 @@ $(document).on("click", ".task-button", function(event) {
   console.log(taskLabelArr);
   stopWatch.taskLabel = $(`label[name="${name}"]`);
   stopWatch.labelText = $(sW.taskLabel).data("name");
-  // labelTextArr.push(sW.taskLabel);
-  // console.log(labelTextArr);
-  // let taskInterval = 0;
+  const resetBtn = $(`button[data-clear="${name}"]`);
+  $(resetBtn).text("reset");
+
   if (!taskRunning) {
     sW.taskRunning;
     sW.taskId = name;
@@ -174,25 +166,27 @@ $(document).on("click", ".task-button", function(event) {
     $(`button#${name}`)
       .attr({ style: "border-color: red" })
       .text("stop");
-      if (taskLabelArr[0] != taskLabelArr[1]) {
-        const previousName = taskLabelArr[1];
-        const preLabel = $(`label[name=${previousName}]`).data("name");
-        $(`label[name=${previousName}]`).text(preLabel);
-      }
+    // if (taskLabelArr[0] != taskLabelArr[1]) {
+    //   const previousName = taskLabelArr[1];
+    //   const preLabel = $(`label[name=${previousName}]`).data("name");
+    //   $(`label[name=${previousName}]`).text(preLabel);
+    // }
   } else {
     clearTimeout(sW.intervalId);
     !taskRunning;
     durationCalc(startTime, taskDuration, name);
 
     dbr.update({ taskRunning: false });
-    $(stopWatch.taskLabel).text(`${stopWatch.labelText}`);
+    $(stopWatch.taskLabel).text(
+      `${stopWatch.labelText} ${hhmmss(sW.totalDuration)}`
+    );
     $(`button#${name}`)
       .attr({ style: "border-color: yellow" })
       .text("resume");
   }
 });
 
-// -------------------- Clear Button -----------------------
+// -------------------- Reset Button -----------------------
 $(document).on("click", ".clear-button", function(event) {
   event.preventDefault();
   const clear = $(this).data("clear");
@@ -204,6 +198,7 @@ $(document).on("click", ".clear-button", function(event) {
   });
 
   if (clrTaskRunning) {
+    stopWatch.taskLabel = $(`label[name="${clear}"]`);
     durationCalc(clrStartTime, clrDuration, clear);
     counter(clrDuration);
     $(this).text("reset");
@@ -233,6 +228,7 @@ const durationCalc = (start, prevDuration, id) => {
   });
   const latestDuration = end - start;
   const totalDuration = prevDuration + latestDuration;
+  sW.totalDuration = totalDuration;
   db.ref(id).update({ dbDuration: totalDuration });
 };
 

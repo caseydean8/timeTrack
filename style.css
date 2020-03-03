@@ -214,8 +214,12 @@ h3 {
 }
 
 input {
-  /* width: 100%; */
+  width: 100%;
   grid-area: 3 / 2 / 4 / 3;
+}
+
+button {
+  margin: 4px;
 }
 
 #submit {
