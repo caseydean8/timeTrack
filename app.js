@@ -112,7 +112,7 @@ const taskButtons = (key, data) => {
   $(stopWatch.taskLabel).text(
     `${data.task} ${hhmmss(data.duration)} ${inProg}`
   );
-  
+
   const deleteBtn = $("<button>")
     .attr({
       class: "delete-button",
@@ -142,7 +142,7 @@ $(document).on("click", ".task-button", function(event) {
   event.preventDefault();
   const name = $(this).attr("id");
   const dbr = db.ref(name);
-  
+
   dbr.on("value", function(snapshot) {
     taskDuration = snapshot.val().dbDuration;
     startTime = snapshot.val().lastStartTime;
@@ -167,11 +167,7 @@ $(document).on("click", ".task-button", function(event) {
     $(`button#${name}`)
       .attr({ style: "border-color: red" })
       .text("stop");
-    sW.taskObject.forEach(taskObj => {
-      console.log(taskObj);
-      if (taskObj.id != name && (taskObj.taskRunning)) $(`label[name=${taskObj.id}]`).text(`${taskObj.task} in progress`);
-    });
-   
+    checkIfRunning(name);
   } else {
     clearTimeout(sW.intervalId);
     !taskRunning;
@@ -186,6 +182,13 @@ $(document).on("click", ".task-button", function(event) {
       .text("resume");
   }
 });
+
+const checkIfRunning = id => {
+  sW.taskObject.forEach(taskObj => {
+    if (taskObj.id != id && taskObj.taskRunning)
+      $(`label[name=${taskObj.id}]`).text(`${taskObj.task} in progress`);
+  });
+};
 
 // -------------------- Reset Button -----------------------
 $(document).on("click", ".clear-button", function(event) {
@@ -204,6 +207,7 @@ $(document).on("click", ".clear-button", function(event) {
     sW.labelText = clrTask;
     durationCalc(clrStartTime, clrDuration, clear);
     counter(clrDuration);
+    checkIfRunning(clear);
     $(this).text("reset");
   } else {
     db.ref(clear)
@@ -214,8 +218,7 @@ $(document).on("click", ".clear-button", function(event) {
         taskRunning: false
       })
       .catch(err => console.log(err));
-    // stopWatch.taskLabel = $(`label[name="${clear}"]`);
-    // stopWatch.labelText = $(stopWatch.taskLabel).data("name");
+
     sW.taskLabel = $(`label[name="${clear}"]`);
     sW.labelText = $(sW.taskLabel).data("name");
     $(sW.taskLabel).text(`${sW.labelText}`);
