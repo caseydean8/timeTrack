@@ -40,8 +40,15 @@ const sendFireBase = task => {
     .catch(err => console.log(err));
 };
 
+db.ref().on("value", (snapshot) => {
+  sW.taskObj = snapshot.val();
+  console.log(sW.taskObj);
+});
+
 db.ref().on("child_added", function(snapshot) {
   // const key = snapshot.key;
+  // sW.taskObj = snapshot.val();
+  // console.log(sW.taskObj);
   const dbData = {
     id: snapshot.key,
     task: snapshot.val().task,
@@ -49,10 +56,12 @@ db.ref().on("child_added", function(snapshot) {
     taskRunning: snapshot.val().taskRunning,
     start: snapshot.val().lastStartTime
   };
-  objectBuilder(dbData);
+  // objectBuilder(dbData);
+  taskButtons(dbData);
+  sW.taskObjArr.push(dbData);
 });
 
-const objectBuilder = (data) => {
+const objectBuilder = data => {
   // console.log(data);
   taskObj = {
     id: data.id,
@@ -63,7 +72,7 @@ const objectBuilder = (data) => {
     taskLabel: ""
   };
   taskButtons(taskObj);
-  sW.taskObject.push(taskObj);
+  sW.taskObjArr.push(taskObj);
   console.log(stopWatch);
 };
 
@@ -76,7 +85,8 @@ const stopWatch = {
   taskLabel: "",
   labelText: "",
   taskRunning: false,
-  taskObject: []
+  taskObjArr: [],
+  taskObj: {}
 };
 const sW = stopWatch;
 // taskLabelArr = [];
@@ -84,7 +94,8 @@ const sW = stopWatch;
 
 console.log(sW.intervalId);
 
-const taskButtons = (data) => {
+const taskButtons = data => {
+  console.log(data);
   const taskForm = $("<form>").attr({ id: data.id, class: "tasks" });
 
   const taskBtn = $("<button>").attr({
@@ -113,9 +124,7 @@ const taskButtons = (data) => {
   // let inProg = "";
   // if (data.taskRunning) inProg = "in progress";
   // console.log(data.task, data.duration, inProg);
-  $(data.taskLabel).text(
-    `${data.task} ${hhmmss(data.duration)} `
-  );
+  $(data.taskLabel).text(`${data.task} ${hhmmss(data.duration)} `);
 
   const deleteBtn = $("<button>")
     .attr({
@@ -143,21 +152,25 @@ const taskButtons = (data) => {
 // ---------------- TASK BUTTON --------------------------
 $(document).on("click", ".task-button", function(event) {
   event.preventDefault();
-  console.log(sW.taskObject);
-  const name = $(this).attr("id");
-  let taskDuration;
-  let startTime;
-  let taskRunning;
-  let task;
-  for (let object of sW.taskObject) {
-    if (object.id === name) {
-      console.log(object);
-      taskDuration = object.duration;
-      startTime = object.start;
-      taskRunning = object.taskRunning;
-      task = object.task;
-    }
-  }
+  console.log(sW.taskObjArr);
+  let name = $(this).attr("id");
+  console.log(name, typeof(name));
+  console.log(sW.taskObj);
+  console.log(sW.taskObj[name]);
+  const taskData = sW.taskObj[name];
+  let taskDuration = taskData.dbDuration;
+  let startTime = taskData.lastStartTime;
+  let taskRunning = taskData.taskRunning;
+  let task = taskData.task;
+  // for (let object of sW.taskObjArr) {
+  //   if (object.id === name) {
+  //     console.log(object);
+  //     taskDuration = object.duration;
+  //     startTime = object.start;
+  //     taskRunning = object.taskRunning;
+  //     task = object.task;
+  //   }
+  // }
   const dbr = db.ref(name);
 
   // dbr.on("value", function(snapshot) {
@@ -201,7 +214,7 @@ $(document).on("click", ".task-button", function(event) {
 });
 
 const checkIfRunning = id => {
-  sW.taskObject.forEach(taskObj => {
+  sW.taskObjArr.forEach(taskObj => {
     if (taskObj.id != id && taskObj.taskRunning)
       $(`label[name=${taskObj.id}]`).text(`${taskObj.task} in progress`);
   });
@@ -258,7 +271,7 @@ const durationCalc = (start, prevDuration, id) => {
 // +++++++++++++++++++++++++ INCREMENT ++++++++++++++++++++++++++++++++++++++
 const counter = (id, task, duration) => {
   // let task;
-  // sW.taskObject.forEach(object => {
+  // sW.taskObjArr.forEach(object => {
   //   if (object.id === id) {
   //     // taskLabel = task.taskLabel;
   //     task = object.task;
