@@ -29,6 +29,7 @@ $("button").on("click", function(event) {
 const sendFireBase = task => {
   const newTask = {
     task: task,
+    interval: 0,
     dbDuration: 0,
     firstStartTime: 0,
     lastStartTime: 0,
@@ -40,10 +41,7 @@ const sendFireBase = task => {
     .catch(err => console.log(err));
 };
 
-db.ref().on("value", (snapshot) => {
-  sW.taskObj = snapshot.val();
-  console.log(sW.taskObj);
-});
+db.ref().on("value", snapshot => sW.taskObj = snapshot.val());
 
 db.ref().on("child_added", function(snapshot) {
   // const key = snapshot.key;
@@ -95,7 +93,6 @@ const sW = stopWatch;
 console.log(sW.intervalId);
 
 const taskButtons = data => {
-  console.log(data);
   const taskForm = $("<form>").attr({ id: data.id, class: "tasks" });
 
   const taskBtn = $("<button>").attr({
@@ -152,11 +149,9 @@ const taskButtons = data => {
 // ---------------- TASK BUTTON --------------------------
 $(document).on("click", ".task-button", function(event) {
   event.preventDefault();
-  console.log(sW.taskObjArr);
-  let name = $(this).attr("id");
-  console.log(name, typeof(name));
-  console.log(sW.taskObj);
-  console.log(sW.taskObj[name]);
+  // console.log(sW.taskObjArr);
+  const name = $(this).attr("id");
+
   const taskData = sW.taskObj[name];
   let taskDuration = taskData.dbDuration;
   let startTime = taskData.lastStartTime;
@@ -173,22 +168,17 @@ $(document).on("click", ".task-button", function(event) {
   // }
   const dbr = db.ref(name);
 
-  // dbr.on("value", function(snapshot) {
-  //   taskDuration = snapshot.val().dbDuration;
-  //   startTime = snapshot.val().lastStartTime;
-  //   taskRunning = snapshot.val().taskRunning;
-  // });
   let sendData = false;
   if (!startTime) sendData = true;
 
-  taskLabel = $(`label[name="${name}"]`);
-  labelText = $(taskLabel).data("name");
+  let taskLabel = $(`label[name="${name}"]`);
+  // labelText = $(taskLabel).data("name");
+  // console.log(labelText);
   const resetBtn = $(`button[data-clear="${name}"]`);
   $(resetBtn).text("reset");
 
   if (!taskRunning) {
-    // sW.taskRunning;
-    // sW.taskId = name;
+    taskRunning = true;
     startTime = moment().unix();
     counter(name, task, taskDuration);
     if (sendData)
@@ -199,14 +189,12 @@ $(document).on("click", ".task-button", function(event) {
       .text("stop");
     checkIfRunning(name);
   } else {
+    taskRunning = false;
     clearTimeout(sW.intervalId);
-    // !taskRunning;
     durationCalc(startTime, taskDuration, name);
 
     dbr.update({ taskRunning: false });
-    $(stopWatch.taskLabel).text(
-      `${stopWatch.labelText} ${hhmmss(sW.totalDuration)}`
-    );
+    $(taskLabel).text(`${task} ${hhmmss(taskDuration)}`);
     $(`button#${name}`)
       .attr({ style: "border-color: yellow" })
       .text("resume");
@@ -264,7 +252,7 @@ const durationCalc = (start, prevDuration, id) => {
   });
   const latestDuration = end - start;
   const totalDuration = prevDuration + latestDuration;
-  sW.totalDuration = totalDuration;
+  // sW.totalDuration = totalDuration;
   db.ref(id).update({ dbDuration: totalDuration });
 };
 
