@@ -41,7 +41,7 @@ const sendFireBase = task => {
     .catch(err => console.log(err));
 };
 
-db.ref().on("value", snapshot => sW.taskObj = snapshot.val());
+db.ref().on("value", snapshot => (sW.taskObj = snapshot.val()));
 
 db.ref().on("child_added", function(snapshot) {
   // const key = snapshot.key;
@@ -190,14 +190,16 @@ $(document).on("click", ".task-button", function(event) {
     checkIfRunning(name);
   } else {
     taskRunning = false;
+    console.log(hhmmss(taskDuration));
     clearTimeout(sW.intervalId);
     durationCalc(startTime, taskDuration, name);
-
-    dbr.update({ taskRunning: false });
+    dbr.on("value", snapshot => (taskDuration = snapshot.val().dbDuration));
+    console.log(hhmmss(taskDuration) + " after dbr.on('value', snapshot)");
     $(taskLabel).text(`${task} ${hhmmss(taskDuration)}`);
     $(`button#${name}`)
-      .attr({ style: "border-color: yellow" })
-      .text("resume");
+    .attr({ style: "border-color: yellow" })
+    .text("resume");
+    dbr.update({ taskRunning: false });
   }
 });
 
@@ -246,14 +248,14 @@ $(document).on("click", ".clear-button", function(event) {
 // *********************** DURATION CALCULATOR ***************************
 const durationCalc = (start, prevDuration, id) => {
   let end = moment().unix();
-  db.ref(id).update({ endTime: end });
-  db.ref(id).on("value", snapshot => {
-    end = snapshot.val().endTime;
-  });
+  // db.ref(id).update({ endTime: end });
+  // db.ref(id).on("value", snapshot => {
+  //   end = snapshot.val().endTime;
+  // });
   const latestDuration = end - start;
   const totalDuration = prevDuration + latestDuration;
   // sW.totalDuration = totalDuration;
-  db.ref(id).update({ dbDuration: totalDuration });
+  db.ref(id).update({ endTime: end, dbDuration: totalDuration });
 };
 
 // +++++++++++++++++++++++++ INCREMENT ++++++++++++++++++++++++++++++++++++++
