@@ -59,20 +59,20 @@ db.ref().on("child_added", function(snapshot) {
   sW.taskObjArr.push(dbData);
 });
 
-const objectBuilder = data => {
-  // console.log(data);
-  taskObj = {
-    id: data.id,
-    task: data.task,
-    duration: data.duration,
-    taskRunning: data.taskRunning,
-    start: data.start,
-    taskLabel: ""
-  };
-  taskButtons(taskObj);
-  sW.taskObjArr.push(taskObj);
-  console.log(stopWatch);
-};
+// const objectBuilder = data => {
+//   // console.log(data);
+//   taskObj = {
+//     id: data.id,
+//     task: data.task,
+//     duration: data.duration,
+//     taskRunning: data.taskRunning,
+//     start: data.start,
+//     taskLabel: ""
+//   };
+//   taskButtons(taskObj);
+//   sW.taskObjArr.push(taskObj);
+//   console.log(stopWatch);
+// };
 
 // ==================== TASK BUTTONS ===============================
 const stopWatch = {
@@ -182,31 +182,39 @@ $(document).on("click", ".task-button", function(event) {
     startTime = moment().unix();
     counter(name, task, taskDuration);
     if (sendData)
-      dbr.update({ firstStartTime: startTime, lastStartTime: startTime });
+    dbr.update({ firstStartTime: startTime, lastStartTime: startTime });
     dbr.update({ lastStartTime: startTime, taskRunning: true });
+    checkIfRunning(name);
     $(`button#${name}`)
       .attr({ style: "border-color: red" })
       .text("stop");
-    checkIfRunning(name);
   } else {
     taskRunning = false;
-    console.log(hhmmss(taskDuration));
     clearTimeout(sW.intervalId);
     durationCalc(startTime, taskDuration, name);
     dbr.on("value", snapshot => (taskDuration = snapshot.val().dbDuration));
-    console.log(hhmmss(taskDuration) + " after dbr.on('value', snapshot)");
     $(taskLabel).text(`${task} ${hhmmss(taskDuration)}`);
     $(`button#${name}`)
-    .attr({ style: "border-color: yellow" })
-    .text("resume");
+      .attr({ style: "border-color: yellow" })
+      .text("resume");
     dbr.update({ taskRunning: false });
   }
+  sW.taskObjArr.forEach(item => {
+    if (item.id === name) {
+      item.taskRunning = taskRunning;
+    }
+  })
 });
 
 const checkIfRunning = id => {
+  console.log(id);
+  // console.log(sW.taskObjArr);
   sW.taskObjArr.forEach(taskObj => {
-    if (taskObj.id != id && taskObj.taskRunning)
+    console.log(taskObj.id, taskObj.taskRunning);
+    if (taskObj.id != id && taskObj.taskRunning === true) {
+      console.log(taskObj.id);
       $(`label[name=${taskObj.id}]`).text(`${taskObj.task} in progress`);
+    }
   });
 };
 
