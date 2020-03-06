@@ -118,9 +118,6 @@ const taskButtons = data => {
     "data-name": data.task
   });
 
-  // let inProg = "";
-  // if (data.taskRunning) inProg = "in progress";
-  // console.log(data.task, data.duration, inProg);
   $(data.taskLabel).text(`${data.task} ${hhmmss(data.duration)} `);
 
   const deleteBtn = $("<button>")
@@ -143,7 +140,7 @@ const taskButtons = data => {
     .text("progress");
 
   $(taskForm).append(data.taskLabel, taskBtn, clearBtn, progressBtn, deleteBtn);
-  $("#task-list").append(taskForm);
+  $("#task-list").prepend(taskForm);
 };
 
 // ---------------- TASK BUTTON --------------------------
@@ -214,7 +211,7 @@ const checkIfRunning = id => {
 $(document).on("click", ".clear-button", function(event) {
   event.preventDefault();
   const clear = $(this).data("clear");
-
+console.log(sW.taskObj[clear]);
   db.ref(clear)
     .update({
       dbDuration: 0,
@@ -226,7 +223,8 @@ $(document).on("click", ".clear-button", function(event) {
 
   let clrTaskLabel = $(`label[name="${clear}"]`);
   let clrTask = sW.taskObj[clear].task;
-  $(clrTaskLabel).text(clrTask);
+  let timeDisplay = sW.taskObj[clear].dbDuration;
+  $(clrTaskLabel).text(`${clrTask} ${hhmmss(timeDisplay)}`);
   $(`button#${clear}`).text("start");
 });
 
