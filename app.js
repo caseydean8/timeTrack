@@ -131,18 +131,18 @@ const taskButtons = data => {
     .text("delete");
 
   // Clear Button
-  const clearBtn = $("<button>").attr({
-    class: "clear-button",
-    "data-clear": data.id
-  });
+  const clearBtn = $("<button>")
+    .attr({
+      class: "clear-button",
+      "data-clear": data.id
+    })
+    .text("reset");
 
-  if (data.taskRunning && $(data.taskLabel).text(`${data.task}`)) {
-    $(clearBtn).text("show progess");
-  } else {
-    $(clearBtn).text("reset");
-  }
+  const progressBtn = $("<button>")
+    .attr({ class: "progress-button", "data-progress": data.id })
+    .text("progress");
 
-  $(taskForm).append(data.taskLabel, taskBtn, clearBtn, deleteBtn);
+  $(taskForm).append(data.taskLabel, taskBtn, clearBtn, progressBtn, deleteBtn);
   $("#task-list").append(taskForm);
 };
 
@@ -157,15 +157,7 @@ $(document).on("click", ".task-button", function(event) {
   let startTime = taskData.lastStartTime;
   let taskRunning = taskData.taskRunning;
   let task = taskData.task;
-  // for (let object of sW.taskObjArr) {
-  //   if (object.id === name) {
-  //     console.log(object);
-  //     taskDuration = object.duration;
-  //     startTime = object.start;
-  //     taskRunning = object.taskRunning;
-  //     task = object.task;
-  //   }
-  // }
+
   const dbr = db.ref(name);
 
   let sendData = false;
@@ -182,7 +174,7 @@ $(document).on("click", ".task-button", function(event) {
     startTime = moment().unix();
     counter(name, task, taskDuration);
     if (sendData)
-    dbr.update({ firstStartTime: startTime, lastStartTime: startTime });
+      dbr.update({ firstStartTime: startTime, lastStartTime: startTime });
     dbr.update({ lastStartTime: startTime, taskRunning: true });
     checkIfRunning(name);
     $(`button#${name}`)
@@ -203,7 +195,7 @@ $(document).on("click", ".task-button", function(event) {
     if (item.id === name) {
       item.taskRunning = taskRunning;
     }
-  })
+  });
 });
 
 const checkIfRunning = id => {
@@ -223,36 +215,37 @@ $(document).on("click", ".clear-button", function(event) {
   event.preventDefault();
   const clear = $(this).data("clear");
 
-  db.ref(clear).on("value", function(snapshot) {
-    clrTaskRunning = snapshot.val().taskRunning;
-    clrStartTime = snapshot.val().lastStartTime;
-    clrDuration = snapshot.val().dbDuration;
-    clrTask = snapshot.val().task;
-  });
+  db.ref(clear)
+    .update({
+      dbDuration: 0,
+      firstStartTime: 0,
+      lastStartTime: 0,
+      taskRunning: false
+    })
+    .catch(err => console.log(err));
 
-  if (clrTaskRunning) {
-    stopWatch.taskLabel = $(`label[name="${clear}"]`);
-    sW.labelText = clrTask;
-    durationCalc(clrStartTime, clrDuration, clear);
-    counter(clrDuration);
-    checkIfRunning(clear);
-    $(this).text("reset");
-  } else {
-    db.ref(clear)
-      .update({
-        dbDuration: 0,
-        firstStartTime: 0,
-        lastStartTime: 0,
-        taskRunning: false
-      })
-      .catch(err => console.log(err));
+  let clrTaskLabel = $(`label[name="${clear}"]`);
+  let clrTask = sW.taskObj[clear].task;
+  $(clrTaskLabel).text(clrTask);
+  $(`button#${clear}`).text("start");
+});
 
-    sW.taskLabel = $(`label[name="${clear}"]`);
-    sW.labelText = $(sW.taskLabel).data("name");
-    $(sW.taskLabel).text(`${sW.labelText}`);
-    $(`button#${clear}`).text("start");
+// @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ Progress Button @@@@@@@@@@@@@@@@@@@@@@@@@
+$(document).on("click", ".progress-button", function(event) {
+  event.preventDefault();
+  const progId = $(this).data("progress");
+  const progData = sW.taskObj[progId];
+  console.log(progData);
+  let taskRunning = progData.taskRunning;
+  let task = progData.task;
+  let duration = progData.dbDuration;
+
+  if (taskRunning) {
+    counter(progId, task, duration);
+    checkIfRunning(progId);
   }
 });
+
 // *********************** DURATION CALCULATOR ***************************
 const durationCalc = (start, prevDuration, id) => {
   let end = moment().unix();
