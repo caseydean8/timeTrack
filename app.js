@@ -66,7 +66,6 @@ const sW = stopWatch;
 // console.log(sW.intervalId);
 
 const taskButtons = data => {
-  console.log(data, " after sent to taskButtons");
   const taskForm = $("<form>").attr({ id: data.id, class: "tasks" });
 
   const taskBtn = $("<button>").attr({
@@ -122,10 +121,8 @@ const taskButtons = data => {
 // ---------------- TASK BUTTON --------------------------
 $(document).on("click", ".task-button", function(event) {
   event.preventDefault();
-  // console.log(sW.taskObjArr);
   const name = $(this).attr("id");
   // data from the database
-  console.log(sW.taskObj);
   const taskData = sW.taskObj[name];
   let taskDuration = taskData.dbDuration;
   let startTime = taskData.lastStartTime;
@@ -151,7 +148,7 @@ $(document).on("click", ".task-button", function(event) {
     if (sendData)
       dbr.update({ firstStartTime: startTime, lastStartTime: startTime });
     dbr.update({ lastStartTime: startTime, taskRunning: true });
-    checkIfRunning(name);
+    // checkIfRunning(name);
     $(`button#${name}`)
       .attr({ style: "border-color: red" })
       .text("stop");
@@ -208,7 +205,6 @@ $(document).on("click", ".progress-button", function(event) {
   event.preventDefault();
   const progId = $(this).data("progress");
   const progData = sW.taskObj[progId];
-  console.log(progData);
   const taskRunning = progData.taskRunning;
   const task = progData.task;
   let duration = progData.dbDuration;
@@ -216,36 +212,27 @@ $(document).on("click", ".progress-button", function(event) {
   const progStart = moment().unix();
   duration += progStart - dbStart;
 
-  if (taskRunning) {
-    counter(progId, task, duration);
-    checkIfRunning(progId);
-  }
-  db.ref(progId).update({dbDuration: duration, lastStartTime: progStart});
+  if (taskRunning) counter(progId, task, duration);
+
+  db.ref(progId).update({ dbDuration: duration, lastStartTime: progStart });
 });
 
 // *********************** DURATION CALCULATOR ***************************
 const durationCalc = (start, prevDuration, id) => {
   let end = moment().unix();
-  // db.ref(id).update({ endTime: end });
-  // db.ref(id).on("value", snapshot => {
-  //   end = snapshot.val().endTime;
-  // });
   const latestDuration = end - start;
   const totalDuration = prevDuration + latestDuration;
-  // sW.totalDuration = totalDuration;
   db.ref(id).update({ endTime: end, dbDuration: totalDuration });
 };
 
 // +++++++++++++++++++++++++ INCREMENT ++++++++++++++++++++++++++++++++++++++
 const counter = (id, task, duration) => {
-
   const increment = () => {
     duration++;
     const runDuration = hhmmss(duration);
     $(`label[name="${id}"]`).text(`${task} ${runDuration}`);
     sW.taskObj[id].interval = setTimeout(increment, 1000);
   };
-  // sW.taskObj[id].interval = setTimeout(increment, 1000);
   interval = setTimeout(increment, 1000);
 };
 
@@ -257,8 +244,10 @@ const hhmmss = secs => {
   let hours = Math.floor(minutes / 60);
   minutes = minutes % 60;
   if (minutes < 10) minutes = `0${minutes}`;
-  return `${hours}:${minutes}:${secs}`;
-  // return hours + ":" + minutes + ":" + secs; for old browsers
+  let display;
+  (hours === 0) ? display = `${minutes}:${secs}`: display = `${hours}:${minutes}:${secs}`;
+  // hours + ":" + minutes + ":" + secs; for old browsers
+  return display
 };
 
 // ------------------ Delete Button -------------------------
@@ -271,6 +260,6 @@ $(document).on("click", ".delete-button", function(event) {
     .catch(err => console.log(err));
 });
 
-const stop = (id) => {
-  clearInterval(sW.taskObj[id].interval);
+const stop = id => {
+  clearTimeout(sW.taskObj[id].interval);
 };
