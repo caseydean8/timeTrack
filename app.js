@@ -21,7 +21,6 @@ $("button").on("click", function(event) {
   event.preventDefault();
   const task = $("input").val();
   sendFireBase(task);
-  clearTimeout(sW.intervalId);
   $("input").val("");
 });
 
@@ -76,7 +75,6 @@ db.ref().on("child_added", function(snapshot) {
 
 // ==================== TASK BUTTONS ===============================
 const stopWatch = {
-  taskId: "",
   intervalId: 0,
   totalDuration: 0,
   startTime: 0,
@@ -93,6 +91,7 @@ const sW = stopWatch;
 console.log(sW.intervalId);
 
 const taskButtons = data => {
+  console.log(data);
   const taskForm = $("<form>").attr({ id: data.id, class: "tasks" });
 
   const taskBtn = $("<button>").attr({
@@ -108,17 +107,19 @@ const taskButtons = data => {
         .attr({ style: "border-color: green" })
         .text("start");
 
-  if (data.taskRunning)
-    $(taskBtn)
-      .attr({ style: "border-color: red" })
-      .text("stop");
-
   data.taskLabel = $("<label>").attr({
     name: data.id,
     "data-name": data.task
-  });
+  }).text(`${data.task} ${hhmmss(data.duration)}`);
 
-  $(data.taskLabel).text(`${data.task} ${hhmmss(data.duration)} `);
+  if (data.taskRunning) {
+    $(taskBtn)
+      .attr({ style: "border-color: red" })
+      .text("stop");
+      $(data.taskLabel).text(`${data.task} in progress`)
+  } else {
+
+  }
 
   const deleteBtn = $("<button>")
     .attr({
@@ -148,7 +149,7 @@ $(document).on("click", ".task-button", function(event) {
   event.preventDefault();
   // console.log(sW.taskObjArr);
   const name = $(this).attr("id");
-
+// data from the database
   const taskData = sW.taskObj[name];
   let taskDuration = taskData.dbDuration;
   let startTime = taskData.lastStartTime;
@@ -169,6 +170,7 @@ $(document).on("click", ".task-button", function(event) {
   if (!taskRunning) {
     taskRunning = true;
     startTime = moment().unix();
+
     counter(name, task, taskDuration);
     if (sendData)
       dbr.update({ firstStartTime: startTime, lastStartTime: startTime });
@@ -211,7 +213,7 @@ const checkIfRunning = id => {
 $(document).on("click", ".clear-button", function(event) {
   event.preventDefault();
   const clear = $(this).data("clear");
-console.log(sW.taskObj[clear]);
+  console.log(sW.taskObj[clear]);
   db.ref(clear)
     .update({
       dbDuration: 0,
