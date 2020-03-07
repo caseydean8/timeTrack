@@ -157,7 +157,7 @@ $(document).on("click", ".task-button", function(event) {
       .text("stop");
   } else {
     taskRunning = false;
-    clearTimeout(sW.intervalId);
+    stop();
     durationCalc(startTime, taskDuration, name);
     dbr.on("value", snapshot => (taskDuration = snapshot.val().dbDuration));
     $(taskLabel).text(`${task} ${hhmmss(taskDuration)}`);
@@ -185,7 +185,8 @@ const checkIfRunning = id => {
 $(document).on("click", ".clear-button", function(event) {
   event.preventDefault();
   const clear = $(this).data("clear");
-  console.log(sW.taskObj[clear]);
+  stop();
+  checkIfRunning(clear);
   db.ref(clear)
     .update({
       dbDuration: 0,
@@ -270,26 +271,6 @@ $(document).on("click", ".delete-button", function(event) {
     .catch(err => console.log(err));
 });
 
-// ---------------- NOT USED (yet)---------------------------------------------------
 const stop = () => {
   clearInterval(stopWatch.intervalId);
 };
-
-// less elegant version of hhmmss()
-function timeConverter(t) {
-  //  Takes the current time in seconds and convert it to minutes and seconds (mm:ss).
-  var minutes = Math.floor(t / 60);
-  var seconds = t - minutes * 60;
-
-  if (seconds < 10) {
-    seconds = "0" + seconds;
-  }
-
-  if (minutes === 0) {
-    minutes = "00";
-  } else if (minutes < 10) {
-    minutes = "0" + minutes;
-  }
-
-  return minutes + ":" + seconds;
-}
