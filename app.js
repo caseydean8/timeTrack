@@ -49,7 +49,7 @@ db.ref().on("value", snapshot => {
 db.ref().on("child_added", function(snapshot) {
   const dbData = snapshot.val();
   dbData.id = snapshot.key;
-  console.log(dbData, " data at child_added");
+  // console.log(dbData, " data at child_added");
   taskButtons(dbData);
   sW.taskObjArr.push(dbData);
 });
@@ -157,7 +157,7 @@ $(document).on("click", ".task-button", function(event) {
       .text("stop");
   } else {
     taskRunning = false;
-    stop();
+    stop(name);
     durationCalc(startTime, taskDuration, name);
     dbr.on("value", snapshot => (taskDuration = snapshot.val().dbDuration));
     $(taskLabel).text(`${task} ${hhmmss(taskDuration)}`);
@@ -238,14 +238,14 @@ const durationCalc = (start, prevDuration, id) => {
 
 // +++++++++++++++++++++++++ INCREMENT ++++++++++++++++++++++++++++++++++++++
 const counter = (id, task, duration) => {
-  
-  clearTimeout(sW.intervalId);
+
   const increment = () => {
     duration++;
     const runDuration = hhmmss(duration);
     $(`label[name="${id}"]`).text(`${task} ${runDuration}`);
-    sW.intervalId = setTimeout(increment, 1000);
+    sW.taskObj[id].interval = setTimeout(increment, 1000);
   };
+  // sW.taskObj[id].interval = setTimeout(increment, 1000);
   interval = setTimeout(increment, 1000);
 };
 
@@ -271,6 +271,6 @@ $(document).on("click", ".delete-button", function(event) {
     .catch(err => console.log(err));
 });
 
-const stop = () => {
-  clearInterval(stopWatch.intervalId);
+const stop = (id) => {
+  clearInterval(sW.taskObj[id].interval);
 };
