@@ -182,7 +182,7 @@ const checkIfRunning = id => {
 $(document).on("click", ".clear-button", function(event) {
   event.preventDefault();
   const clear = $(this).data("clear");
-  stop();
+  stop(clear);
   checkIfRunning(clear);
   db.ref(clear)
     .update({
@@ -232,6 +232,7 @@ const counter = (id, task, duration) => {
     const runDuration = hhmmss(duration);
     $(`label[name="${id}"]`).text(`${task} ${runDuration}`);
     sW.taskObj[id].interval = setTimeout(increment, 1000);
+    // console.log(sW.taskObj[id].interval);j
   };
   interval = setTimeout(increment, 1000);
 };
