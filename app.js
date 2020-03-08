@@ -80,13 +80,19 @@ const taskButtons = data => {
       name: data.id,
       "data-name": data.task
     })
-    .text(`${data.task} ${hhmmss(data.dbDuration)}`);
+    .text(`${data.task}`);
+
+  const durLabel = $("<label>")
+    .attr({ class: "duration-label", "data-dur": data.id })
+    .text(hhmmss(data.dbDuration));
 
   if (data.taskRunning) {
     $(taskBtn)
       .attr({ style: "border-color: red" })
       .text("stop");
-    $(taskLabel).text(`${data.task} in progress`);
+    $(durLabel)
+      // .attr({ style: "font-size: 1.29rem" })
+      .text(`in progress`);
   }
 
   const deleteBtn = $("<button>")
@@ -108,7 +114,14 @@ const taskButtons = data => {
     .attr({ class: "progress-button", "data-progress": data.id })
     .text("progress");
 
-  $(taskForm).append(taskLabel, taskBtn, clearBtn, progressBtn, deleteBtn);
+  $(taskForm).append(
+    taskLabel,
+    durLabel,
+    taskBtn,
+    clearBtn,
+    progressBtn,
+    deleteBtn
+  );
   $("#task-list").prepend(taskForm);
 };
 
@@ -129,7 +142,7 @@ $(document).on("click", ".task-button", function(event) {
   if (!startTime) sendData = true;
 
   const taskLabel = $(`label[name="${name}"]`);
-
+  const durLabel = $(`label[data-dur="${name}"]`);
   if (!taskRunning) {
     taskRunning = true;
     startTime = moment().unix();
@@ -147,7 +160,8 @@ $(document).on("click", ".task-button", function(event) {
     stop(name);
     durationCalc(startTime, taskDuration, name);
     dbr.on("value", snapshot => (taskDuration = snapshot.val().dbDuration));
-    $(taskLabel).text(`${task} ${hhmmss(taskDuration)}`);
+    $(taskLabel).text(`${task}`);
+    $(durLabel).text(`${hhmmss(taskDuration)}`);
     $(`button#${name}`)
       .attr({ style: "border-color: green" })
       .text("resume");
@@ -221,7 +235,8 @@ const counter = (id, task, duration) => {
   const increment = () => {
     duration++;
     const runDuration = hhmmss(duration);
-    $(`label[name="${id}"]`).text(`${task} ${runDuration}`);
+    $(`label[name="${id}"]`).text(`${task}`);
+    $(`label[data-dur="${id}"]`).text(`${runDuration}`);
     sW.taskObj[id].interval = setTimeout(increment, 1000);
     // console.log(sW.taskObj[id].interval);
   };
