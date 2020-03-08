@@ -43,20 +43,17 @@ const sendFireBase = task => {
 
 db.ref().on("value", snapshot => {
   sW.taskObj = snapshot.val();
-  // console.log(sW.taskObj);
 });
 
 db.ref().on("child_added", function(snapshot) {
   const dbData = snapshot.val();
   dbData.id = snapshot.key;
-  // console.log(dbData, " data at child_added");
   taskButtons(dbData);
   sW.taskObjArr.push(dbData);
 });
 
 // ==================== TASK BUTTONS ===============================
 const stopWatch = {
-  intervalId: 0,
   taskObjArr: [],
   taskObj: {}
 };
@@ -71,18 +68,15 @@ const taskButtons = data => {
   const taskBtn = $("<button>").attr({
     class: "task-button",
     id: data.id,
-    style: "border-color: yellow"
+    style: "border-color: green"
   });
   // determine task button text and color
 
-  data.dbDuration
-    ? $(taskBtn).text("resume")
-    : $(taskBtn)
-        .attr({ style: "border-color: green" })
-        .text("start");
+  data.dbDuration ? $(taskBtn).text("resume") : $(taskBtn).text("start");
 
-  data.taskLabel = $("<label>")
+  const taskLabel = $("<label>")
     .attr({
+      class: "task-label",
       name: data.id,
       "data-name": data.task
     })
@@ -92,7 +86,7 @@ const taskButtons = data => {
     $(taskBtn)
       .attr({ style: "border-color: red" })
       .text("stop");
-    $(data.taskLabel).text(`${data.task} in progress`);
+    $(taskLabel).text(`${data.task} in progress`);
   }
 
   const deleteBtn = $("<button>")
@@ -114,7 +108,7 @@ const taskButtons = data => {
     .attr({ class: "progress-button", "data-progress": data.id })
     .text("progress");
 
-  $(taskForm).append(data.taskLabel, taskBtn, clearBtn, progressBtn, deleteBtn);
+  $(taskForm).append(taskLabel, taskBtn, clearBtn, progressBtn, deleteBtn);
   $("#task-list").prepend(taskForm);
 };
 
@@ -134,19 +128,15 @@ $(document).on("click", ".task-button", function(event) {
   let sendData = false;
   if (!startTime) sendData = true;
 
-  let taskLabel = $(`label[name="${name}"]`);
-  // labelText = $(taskLabel).data("name");
-  // console.log(labelText);
-  // const resetBtn = $(`button[data-clear="${name}"]`);
-  // $(resetBtn).text("reset");
+  const taskLabel = $(`label[name="${name}"]`);
 
   if (!taskRunning) {
     taskRunning = true;
     startTime = moment().unix();
-
+    const startDate = moment().format("dddd, MMMM Do YYYY, h:mm:ss a");
     counter(name, task, taskDuration);
     if (sendData)
-      dbr.update({ firstStartTime: startTime, lastStartTime: startTime });
+      dbr.update({ firstStartTime: startDate, lastStartTime: startTime });
     dbr.update({ lastStartTime: startTime, taskRunning: true });
     // checkIfRunning(name);
     $(`button#${name}`)
@@ -219,10 +209,11 @@ $(document).on("click", ".progress-button", function(event) {
 
 // *********************** DURATION CALCULATOR ***************************
 const durationCalc = (start, prevDuration, id) => {
-  let end = moment().unix();
+  const end = moment().unix();
+  const endDate = moment().format("dddd, MMMM Do YYYY, h:mm:ss a");
   const latestDuration = end - start;
   const totalDuration = prevDuration + latestDuration;
-  db.ref(id).update({ endTime: end, dbDuration: totalDuration });
+  db.ref(id).update({ endTime: endDate, dbDuration: totalDuration });
 };
 
 // +++++++++++++++++++++++++ INCREMENT ++++++++++++++++++++++++++++++++++++++
@@ -232,7 +223,7 @@ const counter = (id, task, duration) => {
     const runDuration = hhmmss(duration);
     $(`label[name="${id}"]`).text(`${task} ${runDuration}`);
     sW.taskObj[id].interval = setTimeout(increment, 1000);
-    // console.log(sW.taskObj[id].interval);j
+    // console.log(sW.taskObj[id].interval);
   };
   interval = setTimeout(increment, 1000);
 };
@@ -246,9 +237,11 @@ const hhmmss = secs => {
   minutes = minutes % 60;
   if (minutes < 10) minutes = `0${minutes}`;
   let display;
-  (hours === 0) ? display = `${minutes}:${secs}`: display = `${hours}:${minutes}:${secs}`;
+  hours === 0
+    ? (display = `${minutes}:${secs}`)
+    : (display = `${hours}:${minutes}:${secs}`);
   // hours + ":" + minutes + ":" + secs; for old browsers
-  return display
+  return display;
 };
 
 // ------------------ Delete Button -------------------------
