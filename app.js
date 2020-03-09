@@ -213,12 +213,13 @@ $(document).on("click", ".progress-button", function(event) {
   const task = progData.task;
   let duration = progData.dbDuration;
   const dbStart = progData.lastStartTime;
-  const progStart = moment().unix();
-  duration += progStart - dbStart;
-
-  if (taskRunning) counter(progId, task, duration);
-
-  db.ref(progId).update({ dbDuration: duration, lastStartTime: progStart });
+  if (taskRunning) {
+    const progStart = moment().unix();
+    duration += progStart - dbStart;
+    stop(progId);
+    counter(progId, task, duration);
+    db.ref(progId).update({ dbDuration: duration, lastStartTime: progStart });
+  }
 });
 
 // *********************** DURATION CALCULATOR ***************************
