@@ -35,7 +35,6 @@ const sendFireBase = task => {
     task: task,
     taskRunning: false
   };
-  console.log(newTask, "data created at submit");
   db.ref()
     .push(newTask)
     .catch(err => console.log(err));
@@ -52,15 +51,12 @@ db.ref().on("child_added", function(snapshot) {
   sW.taskObjArr.push(dbData);
 });
 
-// ==================== TASK BUTTONS ===============================
+// =========== TASK BUTTON CREATOR ===========
 const stopWatch = {
   taskObjArr: [],
   taskObj: {}
 };
 const sW = stopWatch;
-// use ctrl L to clear chrome dev console
-
-// console.log(sW.intervalId);
 
 const taskButtons = data => {
   const taskForm = $("<form>").attr({ id: data.id, class: "tasks" });
@@ -68,7 +64,7 @@ const taskButtons = data => {
   const taskBtn = $("<button>").attr({
     class: "task-button",
     id: data.id,
-    style: "border-color: green"
+    style: "border-color: lightgreen; color: green"
   });
   // determine task button text and color
 
@@ -90,9 +86,7 @@ const taskButtons = data => {
     $(taskBtn)
       .attr({ style: "border-color: red" })
       .text("stop");
-    $(durLabel)
-      // .attr({ style: "font-size: 1.29rem" })
-      .text(`in progress`);
+    $(durLabel).text(`in progress`);
   }
 
   const deleteBtn = $("<button>")
@@ -102,7 +96,6 @@ const taskButtons = data => {
     })
     .text("delete");
 
-  // Clear Button
   const clearBtn = $("<button>")
     .attr({
       class: "clear-button",
@@ -125,7 +118,8 @@ const taskButtons = data => {
   $("#task-list").prepend(taskForm);
 };
 
-// ---------------- TASK BUTTON --------------------------
+// ----------- TASK BUTTON -----------
+
 $(document).on("click", ".task-button", function(event) {
   event.preventDefault();
   const name = $(this).attr("id");
@@ -151,7 +145,6 @@ $(document).on("click", ".task-button", function(event) {
     if (sendData)
       dbr.update({ firstStartTime: startDate, lastStartTime: startTime });
     dbr.update({ lastStartTime: startTime, taskRunning: true });
-    // checkIfRunning(name);
     $(`button#${name}`)
       .attr({ style: "border-color: red" })
       .text("stop");
@@ -174,15 +167,8 @@ $(document).on("click", ".task-button", function(event) {
   });
 });
 
-const checkIfRunning = id => {
-  sW.taskObjArr.forEach(taskObj => {
-    if (taskObj.id != id && taskObj.taskRunning === true) {
-      $(`label[name=${taskObj.id}]`).text(`${taskObj.task} in progress`);
-    }
-  });
-};
+// ----------- Reset Button -----------
 
-// -------------------- Reset Button -----------------------
 $(document).on("click", ".clear-button", function(event) {
   event.preventDefault();
   const clear = $(this).data("clear");
@@ -204,7 +190,8 @@ $(document).on("click", ".clear-button", function(event) {
   $(`button#${clear}`).text("start");
 });
 
-// @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ Progress Button @@@@@@@@@@@@@@@@@@@@@@@@@
+// @@@@@@@@@@@ Progress Button @@@@@@@@@@@
+
 $(document).on("click", ".progress-button", function(event) {
   event.preventDefault();
   const progId = $(this).data("progress");
@@ -222,7 +209,19 @@ $(document).on("click", ".progress-button", function(event) {
   }
 });
 
-// *********************** DURATION CALCULATOR ***************************
+// ----------- Delete Button -----------
+
+$(document).on("click", ".delete-button", function(event) {
+  event.preventDefault();
+  const remove = $(this).data("delete");
+  $(`#${remove}`).remove();
+  db.ref(remove)
+    .remove()
+    .catch(err => console.log(err));
+});
+
+// *********** DURATION CALCULATOR ***********
+
 const durationCalc = (start, prevDuration, id) => {
   const end = moment().unix();
   const endDate = moment().format("dddd, MMMM Do YYYY, h:mm:ss a");
@@ -231,7 +230,8 @@ const durationCalc = (start, prevDuration, id) => {
   db.ref(id).update({ endTime: endDate, dbDuration: totalDuration });
 };
 
-// +++++++++++++++++++++++++ INCREMENT ++++++++++++++++++++++++++++++++++++++
+// +++++++++++ INCREMENT +++++++++++
+
 const counter = (id, task, duration) => {
   const increment = () => {
     duration++;
@@ -239,12 +239,12 @@ const counter = (id, task, duration) => {
     $(`label[name="${id}"]`).text(`${task}`);
     $(`label[data-dur="${id}"]`).text(`${runDuration}`);
     sW.taskObj[id].interval = setTimeout(increment, 1000);
-    // console.log(sW.taskObj[id].interval);
   };
   interval = setTimeout(increment, 1000);
 };
 
-// --------------------------- time converter -----------------------------------
+// ----------- time converter -----------
+
 const hhmmss = secs => {
   let minutes = Math.floor(secs / 60);
   secs = secs % 60;
@@ -259,16 +259,6 @@ const hhmmss = secs => {
   // hours + ":" + minutes + ":" + secs; for old browsers
   return display;
 };
-
-// ------------------ Delete Button -------------------------
-$(document).on("click", ".delete-button", function(event) {
-  event.preventDefault();
-  const remove = $(this).data("delete");
-  $(`#${remove}`).remove();
-  db.ref(remove)
-    .remove()
-    .catch(err => console.log(err));
-});
 
 const stop = id => {
   clearTimeout(sW.taskObj[id].interval);
