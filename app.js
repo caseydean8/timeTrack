@@ -63,8 +63,7 @@ const taskButtons = data => {
 
   const taskBtn = $("<button>").attr({
     class: "task-button",
-    id: data.id,
-    style: "border-color: lightgreen; color: green"
+    id: data.id
   });
   // determine task button text and color
 
@@ -84,7 +83,7 @@ const taskButtons = data => {
 
   if (data.taskRunning) {
     $(taskBtn)
-      .attr({ style: "border-color: red" })
+      .attr({ style: "border: none; background: lightcoral" })
       .text("stop");
     $(durLabel).text(`in progress`);
   }
@@ -146,7 +145,7 @@ $(document).on("click", ".task-button", function(event) {
       dbr.update({ firstStartTime: startDate, lastStartTime: startTime });
     dbr.update({ lastStartTime: startTime, taskRunning: true });
     $(`button#${name}`)
-      .attr({ style: "border-color: red" })
+      .attr({ style: "border: none; background: lightcoral" })
       .text("stop");
   } else {
     taskRunning = false;
@@ -156,7 +155,7 @@ $(document).on("click", ".task-button", function(event) {
     $(taskLabel).text(`${task}`);
     $(durLabel).text(`${hhmmss(taskDuration)}`);
     $(`button#${name}`)
-      .attr({ style: "border-color: green" })
+      .attr({ style: "border-color: lightgreen, color: green" })
       .text("resume");
     dbr.update({ taskRunning: false });
   }
@@ -173,7 +172,6 @@ $(document).on("click", ".clear-button", function(event) {
   event.preventDefault();
   const clear = $(this).data("clear");
   stop(clear);
-  checkIfRunning(clear);
   db.ref(clear)
     .update({
       dbDuration: 0,
@@ -183,10 +181,12 @@ $(document).on("click", ".clear-button", function(event) {
     })
     .catch(err => console.log(err));
 
-  let clrTaskLabel = $(`label[name="${clear}"]`);
+  const clrTaskLabel = $(`label[name="${clear}"]`);
+  const clrDurLabel = $(`label[data-dur="${clear}"]`);
   let clrTask = sW.taskObj[clear].task;
   let timeDisplay = sW.taskObj[clear].dbDuration;
-  $(clrTaskLabel).text(`${clrTask} ${hhmmss(timeDisplay)}`);
+  $(clrTaskLabel).text(`${clrTask}`);
+  $(clrDurLabel).text(`${hhmmss(timeDisplay)}`);
   $(`button#${clear}`).text("start");
 });
 

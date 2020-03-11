@@ -6,7 +6,6 @@ body {
   line-height: 1.6;
   font-weight: 400;
   font-family: "Open Sans", sans-serif;
-  /* font-family: "Raleway", "HelveticaNeue", "Helvetica Neue", Helvetica, Arial, sans-serif; */
   color: #222;
 }
 
@@ -106,8 +105,8 @@ button:focus,
 input[type="submit"]:focus,
 input[type="reset"]:focus,
 input[type="button"]:focus {
-  color: #333;
-  border-color: #888;
+  /* color: #333; */
+  /* border-color: #888; */
   outline: 0;
 }
 
@@ -123,7 +122,7 @@ input[type="password"],
 textarea,
 select {
   height: 38px;
-  /* width: 100%; */
+  width: 100%;
   padding: 6px 10px; /* The 6px vertically centers text on FF, ignored by Webkit */
   background-color: #fff;
   border: 1px solid #d1d1d1;
@@ -181,6 +180,10 @@ label > .label-body {
   font-weight: normal;
 }
 /* ----------- new ----------- */
+
+body {
+  background: #fbffe6;
+}
 .parent {
   display: grid;
   grid-template-columns: 1fr 12fr 1fr;
@@ -201,6 +204,9 @@ label > .label-body {
   justify-content: center;
   align-items: center;
   font-family: "Quicksand", sans-serif;
+  color: #555;
+  text-shadow: -1px -1px 0 #fb9a40, 1px -1px 0 #fb9a40, -1px 1px 0 #fb9a40,
+      1px 1px 0 #fb9a40;
 }
 
 h3 {
@@ -217,7 +223,7 @@ input {
 
 #submit {
   margin: 4px 0;
-  background: lightblue;
+  background: #d0f9f5;
   border: none;
 }
 
@@ -242,8 +248,8 @@ input {
     "task-label duration-label"
     "start reset"
     "progress delete";
-  background: white;
-  border: solid 1px #bbb;
+  background: #fefff8;
+  border: solid 1px #fdc38d;
   border-radius: 4px;
   padding: 4px;
   margin: 4px 0 8px 0;
@@ -266,16 +272,25 @@ input {
 /* start */
 .task-button {
   grid-area: start;
+  background: #ebffeb;
+  border-color: lightgreen;
+  color: green;
 }
 /* reset */
 .clear-button {
   grid-area: reset;
+  background: #a3f3eb;
+  border: none;
 }
 /* progress */
 .progress-button {
   grid-area: progress;
+  background: #fbd341;
+  border: none;
 }
 /* delete */
 .delete-button {
   grid-area: delete;
+  background: #fb9a40;
+  border: none;
 }
