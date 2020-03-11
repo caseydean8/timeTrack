@@ -233,14 +233,24 @@ const durationCalc = (start, prevDuration, id) => {
 // +++++++++++ INCREMENT +++++++++++
 
 const counter = (id, task, duration) => {
+  const initDur = duration;
   const increment = () => {
     duration++;
-    const runDuration = hhmmss(duration);
-    $(`label[name="${id}"]`).text(`${task}`);
-    $(`label[data-dur="${id}"]`).text(`${runDuration}`);
-    sW.taskObj[id].interval = setTimeout(increment, 1000);
+    if (duration < initDur + 9) {
+      const runDuration = hhmmss(duration);
+      $(`label[name="${id}"]`).text(`${task}`);
+      $(`label[data-dur="${id}"]`).text(`${runDuration}`);
+      sW.taskObj[id].interval = setTimeout(increment, 1000);
+    } else {
+      inProgress(id);
+    }
+    // const runDuration = hhmmss(duration);
+    // $(`label[name="${id}"]`).text(`${task}`);
+    // $(`label[data-dur="${id}"]`).text(`${runDuration}`);
+    // sW.taskObj[id].interval = setTimeout(increment, 1000);
   };
   interval = setTimeout(increment, 1000);
+  // nextInterval = setTimeout(inProgress(id), 5000);
 };
 
 // ----------- time converter -----------
@@ -258,6 +268,11 @@ const hhmmss = secs => {
     : (display = `${hours}:${minutes}:${secs}`);
   // hours + ":" + minutes + ":" + secs; for old browsers
   return display;
+};
+
+const inProgress = id => {
+  stop(id);
+  $(`label[data-dur="${id}"]`).text(`. . . in progress`);
 };
 
 const stop = id => {
