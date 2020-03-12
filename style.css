@@ -200,9 +200,12 @@ body {
 
 #header {
   grid-area: header;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  position: fixed;
+  z-index: -1;
+  right: 21%;
+  /* display: flex; */
+  /* justify-content: center; */
+  /* align-items: center; */
   font-family: "Quicksand", sans-serif;
   color: #555;
   text-shadow: -1px -1px 0 #fb9a40, 1px -1px 0 #fb9a40, -1px 1px 0 #fb9a40,
@@ -214,7 +217,8 @@ h3 {
 }
 #task {
   grid-area: task;
-  position: relative;
+  margin-top: 17%;
+  /* position: relative; */
 }
 
 input {
@@ -253,6 +257,7 @@ input {
   border-radius: 4px;
   padding: 4px;
   margin: 4px 0 8px 0;
+  /* opacity: .6; */
 }
 /* label */
 .task-label {
