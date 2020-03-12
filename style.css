@@ -294,3 +294,13 @@ input {
   background: #fb9a40;
   border: none;
 }
+
+[data-pulse="true"] {
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% {color: white}
+  50% {color: black}
+  100% { color: white}
+}

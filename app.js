@@ -78,13 +78,14 @@ const taskButtons = data => {
     .text(`${data.task}`);
 
   const durLabel = $("<label>")
-    .attr({ class: "duration-label", "data-dur": data.id })
+    .attr({ class: "duration-label", "data-dur": data.id, "data-pulse": false })
     .text(hhmmss(data.dbDuration));
 
   if (data.taskRunning) {
     $(taskBtn)
       .attr({ style: "border: none; background: lightcoral" })
       .text("stop");
+    $(durLabel).attr("data-pulse", true);
     $(durLabel).text(`in progress`);
   }
 
@@ -153,6 +154,7 @@ $(document).on("click", ".task-button", function(event) {
     durationCalc(startTime, taskDuration, name);
     dbr.on("value", snapshot => (taskDuration = snapshot.val().dbDuration));
     $(taskLabel).text(`${task}`);
+    $(durLabel).attr("data-pulse", false);
     $(durLabel).text(`${hhmmss(taskDuration)}`);
     $(`button#${name}`)
       .attr({ style: "border-color: lightgreen, color: green" })
@@ -236,7 +238,7 @@ const counter = (id, task, duration) => {
   const initDur = duration;
   const increment = () => {
     duration++;
-    if (duration < initDur + 9) {
+    if (duration < initDur + 11) {
       const runDuration = hhmmss(duration);
       $(`label[name="${id}"]`).text(`${task}`);
       $(`label[data-dur="${id}"]`).text(`${runDuration}`);
@@ -244,13 +246,8 @@ const counter = (id, task, duration) => {
     } else {
       inProgress(id);
     }
-    // const runDuration = hhmmss(duration);
-    // $(`label[name="${id}"]`).text(`${task}`);
-    // $(`label[data-dur="${id}"]`).text(`${runDuration}`);
-    // sW.taskObj[id].interval = setTimeout(increment, 1000);
   };
   interval = setTimeout(increment, 1000);
-  // nextInterval = setTimeout(inProgress(id), 5000);
 };
 
 // ----------- time converter -----------
@@ -272,7 +269,9 @@ const hhmmss = secs => {
 
 const inProgress = id => {
   stop(id);
-  $(`label[data-dur="${id}"]`).text(`. . . in progress`);
+  $(`label[data-dur="${id}"]`)
+    .attr({ "data-pulse": true })
+    .text("in progress");
 };
 
 const stop = id => {
