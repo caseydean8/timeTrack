@@ -19,7 +19,9 @@ const db = firebase.database();
 
 $("button").on("click", function(event) {
   event.preventDefault();
-  const task = $("input").val();
+  const task = $("input")
+    .val()
+    .trim();
   sendFireBase(task);
   $("input").val("");
 });
@@ -192,7 +194,7 @@ $(document).on("click", ".clear-button", function(event) {
   $(`button#${clear}`).text("start");
 });
 
-// @@@@@@@@@@@ Progress Button @@@@@@@@@@@
+// @@@@@@@@@@@@@ Progress Button @@@@@@@@@@@@@
 
 $(document).on("click", ".progress-button", function(event) {
   event.preventDefault();
@@ -203,6 +205,7 @@ $(document).on("click", ".progress-button", function(event) {
   let duration = progData.dbDuration;
   const dbStart = progData.lastStartTime;
   if (taskRunning) {
+    $(`label[data-dur="${progId}"]`).attr({ "data-pulse": false });
     const progStart = moment().unix();
     duration += progStart - dbStart;
     stop(progId);
